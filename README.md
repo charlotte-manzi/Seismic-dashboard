@@ -6,7 +6,7 @@ Dashboard interactif dédié à l'analyse de l'activité sismique du **volcan so
 
 ## 🚀 Accès Direct à l'Application
 
-**[👉 Lancer le Dashboard Fani Maoré](https://your-app-link.streamlit.app)** *(Disponible après déploiement)*
+**[👉 Lancer le Dashboard Fani Maoré](https://fani-maore-seismic-data.streamlit.app/)** *(Disponible après déploiement)*
 
 ## 🌋 À propos du Volcan Fani Maoré
 
