@@ -1,7 +1,61 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import sys
 from pathlib import Path
+
+# Configuration pour éviter les erreurs de déploiement
+import os
+os.environ['MPLBACKEND'] = 'Agg'
+
+# Imports sécurisés pour le cloud
+try:
+    import matplotlib
+    matplotlib.use('Agg')  # Backend non-interactif obligatoire pour Streamlit Cloud
+    import matplotlib.pyplot as plt
+    plt.style.use('default')
+    MATPLOTLIB_AVAILABLE = True
+except ImportError as e:
+    st.error(f"❌ Erreur matplotlib: {e}")
+    MATPLOTLIB_AVAILABLE = False
+
+try:
+    import seaborn as sns
+    sns.set_palette("husl")
+    SEABORN_AVAILABLE = True
+except ImportError:
+    SEABORN_AVAILABLE = False
+    
+try:
+    from scipy import stats
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
+
+# Configuration Streamlit
+st.set_page_config(page_title="Fani Maoré - Surveillance Sismique", page_icon="🌋", layout="wide")
+
+# Hide Streamlit's automatic file browser/navigation
+st.markdown("""
+<style>
+/* Hide the file browser navigation */
+.stApp > header {
+    background-color: transparent;
+}
+.stApp > header > div {
+    display: none !important;
+}
+/* Hide the "Browse files" section */
+section[data-testid="stFileUploadDropzone"] {
+    display: none !important;
+}
+/* Hide any top navigation elements */
+.main .block-container {
+    padding-top: 1rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # Configuration
 st.set_page_config(page_title="Fani Maoré - Surveillance Sismique", page_icon="🌋", layout="wide")
