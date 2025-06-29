@@ -790,39 +790,38 @@ def analyser_potentiel_destructeur(df_filtered):
     st.subheader("⚠️ Analyse du Potentiel Destructeur")
     
     # BOÎTE D'INFORMATION sur le potentiel destructeur
-    st.markdown("""
-    <div class="info-section" style="background-color: #fff3cd; padding: 20px; border-radius: 15px; margin: 15px 0; border-left: 4px solid #ffc107; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h4 style="color: #856404; margin-top: 0;">🧮 À propos du Potentiel Destructeur</h4>
+    with st.container():
+        st.markdown("""
+        <div style="background-color: #fff3cd; padding: 20px; border-radius: 15px; margin: 15px 0; border-left: 4px solid #ffc107; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h4 style="color: #856404; margin-top: 0;">🧮 À propos du Potentiel Destructeur</h4>
+        </div>
+        """, unsafe_allow_html=True)
         
-        <h5 style="color: #856404;">📐 Formule utilisée :</h5>
-        <p style="color: #856404; font-family: monospace; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 5px;">
-            <strong>Potentiel = Magnitude × (1 + 70/Profondeur)</strong>
-        </p>
+        st.markdown("#### 📐 Formule utilisée :")
+        st.code("Potentiel = Magnitude × (1 + 70/Profondeur)", language="python")
         
-        <h5 style="color: #856404;">🎯 Principe :</h5>
-        <ul style="color: #856404;">
-            <li><strong>Plus la magnitude est élevée</strong> → Plus le potentiel destructeur augmente</li>
-            <li><strong>Plus le séisme est superficiel</strong> → Plus il est destructeur en surface</li>
-            <li><strong>Coefficient 70</strong> : Facteur d'amplification pour les séismes peu profonds</li>
-        </ul>
+        st.markdown("#### 🎯 Principe :")
+        st.markdown("""
+        - **Plus la magnitude est élevée** → Plus le potentiel destructeur augmente
+        - **Plus le séisme est superficiel** → Plus il est destructeur en surface  
+        - **Coefficient 70** : Facteur d'amplification pour les séismes peu profonds
+        """)
         
-        <h5 style="color: #856404;">⚠️ Limitations importantes :</h5>
-        <ul style="color: #856404;">
-            <li>📊 <strong>Indicateur relatif</strong> uniquement (pour comparer les séismes entre eux)</li>
-            <li>🏗️ <strong>Ne remplace pas</strong> les études d'ingénierie sismique professionnelles</li>
-            <li>🌍 <strong>N'inclut pas</strong> : géologie locale, type de sol, distance épicentrale</li>
-            <li>🏘️ <strong>N'évalue pas</strong> l'impact réel sur les infrastructures</li>
-        </ul>
+        st.markdown("#### ⚠️ Limitations importantes :")
+        st.markdown("""
+        - 📊 **Indicateur relatif** uniquement (pour comparer les séismes entre eux)
+        - 🏗️ **Ne remplace pas** les études d'ingénierie sismique professionnelles
+        - 🌍 **N'inclut pas** : géologie locale, type de sol, distance épicentrale
+        - 🏘️ **N'évalue pas** l'impact réel sur les infrastructures
+        """)
         
-        <h5 style="color: #856404;">🔍 Fonctionnalité de cette analyse :</h5>
-        <ul style="color: #856404;">
-            <li>📈 <strong>Distribution</strong> : Voir la répartition des niveaux de dangerosité</li>
-            <li>🏆 <strong>Classement</strong> : Identifier les séismes les plus préoccupants</li>
-            <li>📊 <strong>Statistiques</strong> : Comprendre les tendances de votre dataset</li>
-            <li>🎯 <strong>Catégorisation</strong> : Regroupement en niveaux (Très faible → Très élevé)</li>
-        </ul>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("#### 🔍 Fonctionnalité de cette analyse :")
+        st.markdown("""
+        - 📈 **Distribution** : Voir la répartition des niveaux de dangerosité
+        - 🏆 **Classement** : Identifier les séismes les plus préoccupants
+        - 📊 **Statistiques** : Comprendre les tendances de votre dataset
+        - 🎯 **Catégorisation** : Regroupement en niveaux (Très faible → Très élevé)
+        """)
     
     if len(df_filtered) == 0:
         st.warning("Aucune donnée pour l'analyse du potentiel destructeur.")
@@ -1077,46 +1076,45 @@ def analyser_energie(df_filtered):
     st.subheader("⚡ Analyse de l'Énergie Libérée")
     
     # BOÎTE D'INFORMATION sur l'énergie libérée
-    st.markdown("""
-    <div class="info-section" style="background-color: #d1ecf1; padding: 20px; border-radius: 15px; margin: 15px 0; border-left: 4px solid #bee5eb; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h4 style="color: #0c5460; margin-top: 0;">⚡ À propos de l'Énergie Sismique</h4>
+    with st.container():
+        st.markdown("""
+        <div style="background-color: #d1ecf1; padding: 20px; border-radius: 15px; margin: 15px 0; border-left: 4px solid #bee5eb; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <h4 style="color: #0c5460; margin-top: 0;">⚡ À propos de l'Énergie Sismique</h4>
+        </div>
+        """, unsafe_allow_html=True)
         
-        <h5 style="color: #0c5460;">📐 Formule de Gutenberg-Richter :</h5>
-        <p style="color: #0c5460; font-family: monospace; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 5px;">
-            <strong>E = 10^(1.5 × Magnitude + 4.8)</strong> Joules
-        </p>
+        st.markdown("#### 📐 Formule de Gutenberg-Richter :")
+        st.code("E = 10^(1.5 × Magnitude + 4.8)   # Joules", language="python")
         
-        <h5 style="color: #0c5460;">🎯 Principe physique :</h5>
-        <ul style="color: #0c5460;">
-            <li><strong>Énergie totale</strong> libérée lors de la rupture de la faille</li>
-            <li><strong>Échelle logarithmique</strong> : +1 magnitude = ×32 en énergie</li>
-            <li><strong>Formule universelle</strong> utilisée en sismologie mondiale</li>
-        </ul>
+        st.markdown("#### 🎯 Principe physique :")
+        st.markdown("""
+        - **Énergie totale** libérée lors de la rupture de la faille
+        - **Échelle logarithmique** : +1 magnitude = ×32 en énergie
+        - **Formule universelle** utilisée en sismologie mondiale
+        """)
         
-        <h5 style="color: #0c5460;">⚠️ Précision et limitations :</h5>
-        <ul style="color: #0c5460;">
-            <li>✅ <strong>Approximation scientifique standard</strong> (basée sur la magnitude uniquement)</li>
-            <li>⚡ <strong>Incertitude typique</strong> : facteur 2 à 10 (selon mécanisme de rupture)</li>
-            <li>🎯 <strong>Plus précise pour</strong> magnitudes > 4.0</li>
-            <li>🚫 <strong>N'inclut pas</strong> : mécanisme focal, géologie, durée de rupture</li>
-        </ul>
+        st.markdown("#### ⚠️ Précision et limitations :")
+        st.markdown("""
+        - ✅ **Approximation scientifique standard** (basée sur la magnitude uniquement)
+        - ⚡ **Incertitude typique** : facteur 2 à 10 (selon mécanisme de rupture)
+        - 🎯 **Plus précise pour** magnitudes > 4.0
+        - 🚫 **N'inclut pas** : mécanisme focal, géologie, durée de rupture
+        """)
         
-        <h5 style="color: #0c5460;">🔬 Fonctionnalité de cette analyse :</h5>
-        <ul style="color: #0c5460;">
-            <li>📊 <strong>Distribution énergétique</strong> : Visualiser la répartition des énergies</li>
-            <li>📈 <strong>Évolution temporelle</strong> : Suivre l'accumulation d'énergie dans le temps</li>
-            <li>🏷️ <strong>Contribution par magnitude</strong> : Voir quelles catégories libèrent le plus d'énergie</li>
-            <li>📏 <strong>Relation théorique</strong> : Vérifier la conformité à la loi de Gutenberg-Richter</li>
-            <li>🔢 <strong>Ordres de grandeur</strong> : Comprendre la puissance relative des séismes</li>
-        </ul>
+        st.markdown("#### 🔬 Fonctionnalité de cette analyse :")
+        st.markdown("""
+        - 📊 **Distribution énergétique** : Visualiser la répartition des énergies
+        - 📈 **Évolution temporelle** : Suivre l'accumulation d'énergie dans le temps
+        - 🏷️ **Contribution par magnitude** : Voir quelles catégories libèrent le plus d'énergie
+        - 📏 **Relation théorique** : Vérifier la conformité à la loi de Gutenberg-Richter
+        - 🔢 **Ordres de grandeur** : Comprendre la puissance relative des séismes
+        """)
         
-        <h5 style="color: #0c5460;">💡 Interprétation :</h5>
-        <p style="color: #0c5460;">
-            Cette analyse vous permet de <strong>comparer quantitativement</strong> la puissance des séismes 
-            et d'identifier les <strong>événements les plus énergétiques</strong> de votre dataset.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("#### 💡 Interprétation :")
+        st.info("""
+        Cette analyse vous permet de **comparer quantitativement** la puissance des séismes 
+        et d'identifier les **événements les plus énergétiques** de votre dataset.
+        """)
     
     if len(df_filtered) == 0:
         st.warning("Aucune donnée pour l'analyse de l'énergie.")
