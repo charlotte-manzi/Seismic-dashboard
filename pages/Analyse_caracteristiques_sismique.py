@@ -960,12 +960,14 @@ def analyser_potentiel_destructeur(df_filtered):
             
             if len(seismes_dangereux) > 0:
                 pourcentage_dangereux = len(seismes_dangereux)/len(df_clean)*100
-                
-                # Utiliser les composants Streamlit natifs au lieu du HTML
-                st.warning("⚠️ **Séismes à surveiller**")
-                st.write(f"**{len(seismes_dangereux)} séismes** ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})")
-                st.write(f"Ces séismes représentent **{pourcentage_dangereux:.1f}%** des **{len(df_clean)}** séismes analysés")
-                st.info("*Note: Ce sont les 10% les plus dangereux par définition (quantile 90%)*")
+                st.markdown(f"""
+                <div class="danger-alert">
+                    <h4>⚠️ Séismes à surveiller</h4>
+                    <p><strong>{len(seismes_dangereux)} séismes</strong> ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})</p>
+                    <p>Ces séismes représentent <strong>{pourcentage_dangereux:.1f}%</strong> des {len(df_clean)} séismes analysés</p>
+                    <p><em>Note: Ce sont les 10% les plus dangereux par définition (quantile 90%)</em></p>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 # Afficher des statistiques sur les séismes dangereux sans le tableau détaillé
                 col1, col2, col3 = st.columns(3)
