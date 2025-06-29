@@ -246,13 +246,32 @@ def prepare_seismic_characteristics(df):
     # DIAGNOSTIC : Afficher des informations sur les données avant traitement
     if 'Profondeur' in df.columns:
         profondeur_stats = df['Profondeur'].describe()
+        st.info(f"📊 **Diagnostic des profondeurs** - Min: {profondeur_stats['min']:.3f} km, Max: {profondeur_stats['max']:.3f} km, Moyenne: {profondeur_stats['mean']:.3f} km")
+        
         if profondeur_stats['mean'] < 2:  # Si la profondeur moyenne est < 2 km
-            st.warning(f"⚠️ Profondeurs suspectes détectées (moyenne: {profondeur_stats['mean']:.3f} km). Possible problème d'unités.")
+            st.warning(f"⚠️ **Profondeurs suspectes détectées !**")
             
-            # Vérifier si les profondeurs sont en km ou en centaines de mètres
-            if profondeur_stats['max'] < 10:  # Si max < 10, probablement en centaines de mètres
-                st.info("🔧 Correction automatique: Conversion des profondeurs de centaines de mètres vers kilomètres.")
-                df['Profondeur'] = df['Profondeur'] * 100  # Convertir en km
+            # Afficher un échantillon pour diagnostic
+            sample_depths = df['Profondeur'].head(10).tolist()
+            st.write(f"🔍 Échantillon des profondeurs: {sample_depths}")
+            
+            # Proposer une correction
+            correction_factor = st.selectbox(
+                "🔧 Correction suggérée :",
+                [
+                    "Aucune correction", 
+                    "Multiplier par 100 (si en centaines de mètres)",
+                    "Multiplier par 1000 (si en mètres)"
+                ],
+                help="Choisissez la correction appropriée selon vos unités de données"
+            )
+            
+            if correction_factor == "Multiplier par 100 (si en centaines de mètres)":
+                df['Profondeur'] = df['Profondeur'] * 100
+                st.success("✅ Profondeurs corrigées : converties en kilomètres")
+            elif correction_factor == "Multiplier par 1000 (si en mètres)":
+                df['Profondeur'] = df['Profondeur'] / 1000
+                st.success("✅ Profondeurs corrigées : converties de mètres en kilomètres")
     
     # Nettoyer toutes les colonnes qui pourraient être numériques
     for col in df.columns:
@@ -399,9 +418,19 @@ def prepare_seismic_characteristics(df):
                 if numeric_version.notna().sum() > len(df) * 0.7:  # Si >70% sont numériques
                     df[col] = numeric_version.astype('float64')
                 else:
-                    df[col] = df[col].astype('string')  # Sinon, forcer en string
+                    # Forcer en string et nettoyer les valeurs problématiques
+                    df[col] = df[col].astype(str).replace({'nan': 'Inconnu', 'None': 'Inconnu'})
+                    df[col] = df[col].astype('string')
             except:
+                # En dernier recours, forcer en string
+                df[col] = df[col].astype(str).replace({'nan': 'Inconnu', 'None': 'Inconnu'})
                 df[col] = df[col].astype('string')
+    
+    # CORRECTION SPÉCIFIQUE : Forcer les types des colonnes critiques
+    if 'Valeur' in df.columns:
+        # Cette colonne cause l'erreur PyArrow
+        df['Valeur'] = pd.to_numeric(df['Valeur'], errors='coerce').astype('float64')
+        st.info("🔧 Colonne 'Valeur' convertie en numérique pour éviter les erreurs d'affichage.")
     
     return df
 
@@ -946,31 +975,68 @@ def analyser_potentiel_destructeur(df_filtered):
                         ['Date', 'Magnitude', 'Profondeur', 'Potentiel_Destructeur']
                     ].copy()
                     
-                    # Conversion sécurisée des dates
+                    # Conversion sécurisée des dates avec diagnostic
                     try:
+                        # Diagnostic des dates avant conversion
+                        date_sample = top_dangerous['Date'].head(5).tolist()
+                        st.write(f"🔍 Échantillon des dates brutes: {date_sample}")
+                        
                         # Créer une copie pour éviter les modifications sur l'original
                         date_column = top_dangerous['Date'].copy()
                         
+                        # Compter les valeurs manquantes
+                        missing_dates = date_column.isna().sum()
+                        if missing_dates > 0:
+                            st.warning(f"⚠️ {missing_dates} dates manquantes détectées sur {len(date_column)}")
+                        
                         # Essayer différents formats de date
+                        date_converted = None
+                        formats_tried = []
+                        
+                        # Format 1: dd/mm/yy HH:MM
                         try:
                             date_converted = pd.to_datetime(date_column, format='%d/%m/%y %H:%M', errors='coerce')
+                            formats_tried.append('%d/%m/%y %H:%M')
+                            if date_converted.notna().sum() > 0:
+                                st.info(f"✅ Format détecté: {formats_tried[-1]} ({date_converted.notna().sum()} dates converties)")
                         except:
+                            pass
+                        
+                        # Format 2: dd/mm/yyyy HH:MM
+                        if date_converted is None or date_converted.notna().sum() == 0:
                             try:
                                 date_converted = pd.to_datetime(date_column, format='%d/%m/%Y %H:%M', errors='coerce')
+                                formats_tried.append('%d/%m/%Y %H:%M')
+                                if date_converted.notna().sum() > 0:
+                                    st.info(f"✅ Format détecté: {formats_tried[-1]} ({date_converted.notna().sum()} dates converties)")
                             except:
-                                date_converted = pd.to_datetime(date_column, errors='coerce')
+                                pass
                         
-                        # Si la conversion a réussi pour certaines dates
-                        if date_converted.notna().any():
+                        # Format 3: Inférence automatique
+                        if date_converted is None or date_converted.notna().sum() == 0:
+                            try:
+                                date_converted = pd.to_datetime(date_column, errors='coerce')
+                                formats_tried.append('Inférence automatique')
+                                if date_converted.notna().sum() > 0:
+                                    st.info(f"✅ Format détecté: {formats_tried[-1]} ({date_converted.notna().sum()} dates converties)")
+                            except:
+                                pass
+                        
+                        # Appliquer le résultat
+                        if date_converted is not None and date_converted.notna().any():
                             # Formater seulement les dates valides
                             top_dangerous['Date'] = date_converted.dt.strftime('%d/%m/%Y %H:%M').fillna('Date inconnue')
+                            successful_conversions = date_converted.notna().sum()
+                            st.success(f"✅ {successful_conversions} dates formatées avec succès")
                         else:
-                            # Garder les dates originales si aucune conversion ne fonctionne
+                            # Aucune conversion réussie
                             top_dangerous['Date'] = top_dangerous['Date'].fillna('Date inconnue')
+                            st.error("❌ Aucun format de date reconnu. Vérifiez vos données sources.")
                     
                     except Exception as e:
                         # En cas d'erreur, remplacer les valeurs manquantes
                         top_dangerous['Date'] = top_dangerous['Date'].fillna('Date inconnue')
+                        st.error(f"❌ Erreur lors de la conversion des dates: {str(e)}")
                     
                     # Arrondir les valeurs numériques pour un meilleur affichage
                     top_dangerous['Magnitude'] = top_dangerous['Magnitude'].round(2)
@@ -982,20 +1048,10 @@ def analyser_potentiel_destructeur(df_filtered):
                     # Afficher un message de debug pour vérifier les données
                     st.info(f"ℹ️ Affichage des {len(top_dangerous)} séismes les plus dangereux")
                     
-                    # CORRECTION PyArrow : Forcer les types avant affichage
-                    for col in top_dangerous.columns:
-                        if col not in ['Date']:
-                            top_dangerous[col] = pd.to_numeric(top_dangerous[col], errors='coerce')
+                    # CORRECTION PyArrow : Nettoyer le DataFrame avant affichage
+                    top_dangerous_clean = clean_dataframe_for_display(top_dangerous)
                     
-                    # Nettoyer pour PyArrow
-                    top_dangerous = top_dangerous.astype({
-                        'Date': 'string',
-                        'Magnitude': 'float64',
-                        'Profondeur (km)': 'float64', 
-                        'Potentiel': 'float64'
-                    })
-                    
-                    st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
+                    st.dataframe(top_dangerous_clean, hide_index=True, use_container_width=True)
                 else:
                     # Si pas de colonne Date, afficher sans
                     top_dangerous = seismes_dangereux.nlargest(10, 'Potentiel_Destructeur')[
