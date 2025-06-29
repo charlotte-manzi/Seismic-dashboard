@@ -818,9 +818,24 @@ def analyser_potentiel_destructeur(df_filtered):
                         ['Date', 'Magnitude', 'Profondeur', 'Potentiel_Destructeur']
                     ].copy()
                     
-                    top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date']).dt.strftime('%d/%m/%Y %H:%M')
-                    top_dangerous.columns = ['Date', 'Magnitude', 'Profondeur (km)', 'Potentiel']
+                    # Conversion sécurisée des dates
+                    try:
+                        # Essayer différents formats de date
+                        top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date'], format='%d/%m/%y %H:%M', errors='coerce')
+                        if top_dangerous['Date'].isna().all():
+                            # Si le premier format échoue, essayer avec année complète
+                            top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date'], format='%d/%m/%Y %H:%M', errors='coerce')
+                        if top_dangerous['Date'].isna().all():
+                            # Si les formats échouent, utiliser l'inférence automatique
+                            top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date'], errors='coerce')
+                        
+                        # Formater les dates pour l'affichage
+                        top_dangerous['Date'] = top_dangerous['Date'].dt.strftime('%d/%m/%Y %H:%M')
+                    except:
+                        # En cas d'erreur, garder les dates comme chaînes
+                        pass
                     
+                    top_dangerous.columns = ['Date', 'Magnitude', 'Profondeur (km)', 'Potentiel']
                     st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
                 else:
                     # Si pas de colonne Date, afficher sans
@@ -924,33 +939,58 @@ def analyser_energie(df_filtered):
     st.markdown("#### 📈 Évolution de l'énergie cumulée")
     
     if 'Date' in df_filtered.columns:
-        df_sorted = df_filtered.sort_values('Date')
-        energie_cumulee = df_sorted['Energie'].cumsum()
+        try:
+            # Conversion sécurisée des dates
+            df_sorted = df_filtered.copy()
+            
+            # Essayer différents formats de date
+            try:
+                df_sorted['Date_converted'] = pd.to_datetime(df_sorted['Date'], format='%d/%m/%y %H:%M', errors='coerce')
+            except:
+                try:
+                    df_sorted['Date_converted'] = pd.to_datetime(df_sorted['Date'], format='%d/%m/%Y %H:%M', errors='coerce')
+                except:
+                    df_sorted['Date_converted'] = pd.to_datetime(df_sorted['Date'], errors='coerce')
+            
+            # Vérifier si la conversion a réussi
+            if df_sorted['Date_converted'].notna().any():
+                df_sorted = df_sorted[df_sorted['Date_converted'].notna()].sort_values('Date_converted')
+                energie_cumulee = df_sorted['Energie'].cumsum()
+                
+                fig, ax = plt.subplots(figsize=(14, 6))
+                ax.plot(df_sorted['Date_converted'], energie_cumulee, linewidth=2, color='red')
+                ax.set_title('Énergie sismique cumulée au fil du temps')
+                ax.set_xlabel('Date')
+                ax.set_ylabel('Énergie cumulée (Joules)')
+                ax.set_yscale('log')
+                ax.grid(alpha=0.3)
+                
+                # Ajouter des informations sur les pics d'énergie
+                try:
+                    max_daily_energy = df_sorted.groupby(df_sorted['Date_converted'].dt.date)['Energie'].sum()
+                    if len(max_daily_energy) > 0:
+                        top_energy_day = max_daily_energy.idxmax()
+                        max_energy_value = max_daily_energy.max()
+                        
+                        st.markdown(f"""
+                        <div class="energy-metric">
+                            <h4>⚡ Pic d'énergie</h4>
+                            <p><strong>Jour le plus énergétique :</strong> {top_energy_day}</p>
+                            <p><strong>Énergie libérée :</strong> {max_energy_value:.2e} Joules</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                except Exception as e:
+                    st.info(f"ℹ️ Impossible de calculer les pics d'énergie: {str(e)}")
+                
+                plt.tight_layout()
+                st.pyplot(fig)
+                plt.close()
+            else:
+                st.warning("⚠️ Impossible de convertir les dates pour l'analyse temporelle.")
         
-        fig, ax = plt.subplots(figsize=(14, 6))
-        ax.plot(df_sorted['Date'], energie_cumulee, linewidth=2, color='red')
-        ax.set_title('Énergie sismique cumulée au fil du temps')
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Énergie cumulée (Joules)')
-        ax.set_yscale('log')
-        ax.grid(alpha=0.3)
-        
-        # Ajouter des informations sur les pics d'énergie
-        max_daily_energy = df_sorted.groupby(df_sorted['Date'].dt.date)['Energie'].sum()
-        top_energy_day = max_daily_energy.idxmax()
-        max_energy_value = max_daily_energy.max()
-        
-        st.markdown(f"""
-        <div class="energy-metric">
-            <h4>⚡ Pic d'énergie</h4>
-            <p><strong>Jour le plus énergétique :</strong> {top_energy_day}</p>
-            <p><strong>Énergie libérée :</strong> {max_energy_value:.2e} Joules</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+        except Exception as e:
+            st.warning(f"⚠️ Erreur lors de l'analyse temporelle: {str(e)}")
+            st.info("ℹ️ L'analyse temporelle a été ignorée en raison du format des dates.")
     
     # 3. Répartition de l'énergie par catégorie de magnitude
     st.markdown("#### 🏷️ Répartition de l'énergie par catégorie")
