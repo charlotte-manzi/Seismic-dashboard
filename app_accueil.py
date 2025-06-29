@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 import warnings
 
-# Configuration Streamlit (UNE SEULE FOIS)
+# Configuration Streamlit
 st.set_page_config(page_title="Fani Maoré - Surveillance Sismique", page_icon="🌋", layout="wide")
 
 # Configuration obligatoire pour Streamlit Cloud
@@ -38,7 +38,7 @@ try:
 except ImportError:
     SCIPY_AVAILABLE = False
 
-# Hide Streamlit's automatic file browser/navigation (UNE SEULE FOIS)
+# Hide Streamlit's automatic file browser/navigation
 st.markdown("""
 <style>
 /* Hide the file browser navigation */
@@ -256,10 +256,10 @@ if df is not None:
         safe_dataframe_display(display_df, use_container_width=True)
         
         # Graphiques de base
-        if MATPLOTLIB_AVAILABLE:
-            col1, col2 = st.columns(2)
-            
-            with col1:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if MATPLOTLIB_AVAILABLE:
                 try:
                     fig, ax = plt.subplots()
                     ax.hist(df['Magnitude'], bins=20, alpha=0.7, color='skyblue')
@@ -270,10 +270,26 @@ if df is not None:
                     plt.close()
                 except Exception as e:
                     st.error(f"Erreur graphique: {e}")
-            
-            with col2:
+                    # Fallback vers Plotly
+                    try:
+                        import plotly.express as px
+                        fig = px.histogram(df, x='Magnitude', nbins=20, title='Distribution des magnitudes - Fani Maoré')
+                        st.plotly_chart(fig, use_container_width=True)
+                    except:
+                        st.warning("📊 Graphique temporairement indisponible")
+            else:
                 try:
-                    yearly_counts = df['Annee'].value_counts().sort_index()
+                    import plotly.express as px
+                    fig = px.histogram(df, x='Magnitude', nbins=20, title='Distribution des magnitudes - Fani Maoré')
+                    st.plotly_chart(fig, use_container_width=True)
+                except:
+                    st.bar_chart(df['Magnitude'].value_counts().sort_index())
+        
+        with col2:
+            yearly_counts = df['Annee'].value_counts().sort_index()
+            
+            if MATPLOTLIB_AVAILABLE:
+                try:
                     fig, ax = plt.subplots()
                     ax.bar(yearly_counts.index, yearly_counts.values, alpha=0.7, color='lightcoral')
                     ax.set_title('Évolution annuelle - Fani Maoré')
@@ -283,6 +299,20 @@ if df is not None:
                     plt.close()
                 except Exception as e:
                     st.error(f"Erreur graphique: {e}")
+                    # Fallback vers Plotly
+                    try:
+                        import plotly.express as px
+                        fig = px.bar(x=yearly_counts.index, y=yearly_counts.values, title='Évolution annuelle - Fani Maoré')
+                        st.plotly_chart(fig, use_container_width=True)
+                    except:
+                        st.bar_chart(yearly_counts)
+            else:
+                try:
+                    import plotly.express as px
+                    fig = px.bar(x=yearly_counts.index, y=yearly_counts.values, title='Évolution annuelle - Fani Maoré')
+                    st.plotly_chart(fig, use_container_width=True)
+                except:
+                    st.bar_chart(yearly_counts)
         
         # Info sur les données
         st.subheader("📊 Résumé de l'Activité Sismique")
@@ -297,23 +327,252 @@ if df is not None:
         
         **Zone de surveillance:** Volcan sous-marin Fani Maoré, Mayotte
         """)
-    
-    # Autres pages (analyses simplifiées pour éviter les erreurs d'import des modules)
+        
     elif page == "📊 Analyse Générale":
         st.header("📊 Analyse Générale - Fani Maoré")
-        st.info("🔧 Module en cours de correction...")
         
+        if 'filtered_df' in st.session_state:
+            try:
+                # Ajouter pages au path
+                pages_path = str(Path(__file__).parent / "pages")
+                if pages_path not in sys.path:
+                    sys.path.insert(0, pages_path)
+                
+                # Import et lancement du module
+                from pages.Analyse_generale import show_analyse_generale
+                st.success("✅ Module Analyse Générale chargé")
+                show_analyse_generale()
+                
+            except ImportError as e:
+                st.warning(f"⚠️ Module Analyse Générale non disponible: {e}")
+                st.info("Affichage d'une analyse simplifiée...")
+                
+                # Analyse simplifiée de secours
+                data = st.session_state.filtered_df
+                
+                # Sélecteur d'année
+                years = sorted(data['Annee'].unique())
+                selected_year = st.selectbox("Choisir l'année:", years)
+                
+                # Filtrer par année
+                data_year = data[data['Annee'] == selected_year]
+                
+                st.metric("Séismes pour l'année sélectionnée", len(data_year))
+                
+                # Graphique mensuel
+                if MATPLOTLIB_AVAILABLE:
+                    try:
+                        monthly_counts = data_year['Mois'].value_counts().sort_index()
+                        
+                        fig, ax = plt.subplots(figsize=(12, 6))
+                        months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 
+                                 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc']
+                        
+                        ax.bar(monthly_counts.index, monthly_counts.values, alpha=0.7, color='steelblue')
+                        ax.set_title(f'Activité mensuelle Fani Maoré - {selected_year}')
+                        ax.set_xlabel('Mois')
+                        ax.set_ylabel('Nombre de séismes')
+                        ax.set_xticks(range(1, 13))
+                        ax.set_xticklabels(months)
+                        st.pyplot(fig)
+                        plt.close()
+                    except Exception as e:
+                        st.error(f"Erreur graphique: {e}")
+        else:
+            st.error("❌ Données non trouvées")
+    
     elif page == "🗺️ Analyse Spatio-Temporelle":
         st.header("🗺️ Analyse Spatio-Temporelle - Fani Maoré")
-        st.info("🔧 Module en cours de correction...")
         
+        if 'filtered_df' in st.session_state:
+            try:
+                # Ajouter pages au path
+                pages_path = str(Path(__file__).parent / "pages")
+                if pages_path not in sys.path:
+                    sys.path.insert(0, pages_path)
+                
+                # Import et lancement du module
+                from pages.Analyse_spatio_temporelle import show_analyse_spatio_temporelle
+                st.success("✅ Module Analyse Spatio-Temporelle chargé")
+                show_analyse_spatio_temporelle()
+                
+            except ImportError as e:
+                st.warning(f"⚠️ Module Analyse Spatio-Temporelle non disponible: {e}")
+                st.info("Affichage d'une analyse simplifiée...")
+                
+                # Analyse simplifiée de secours
+                data = st.session_state.filtered_df
+                
+                # Carte simple avec matplotlib
+                if MATPLOTLIB_AVAILABLE:
+                    try:
+                        fig, ax = plt.subplots(figsize=(12, 8))
+                        
+                        # Scatter plot des séismes
+                        scatter = ax.scatter(data['Longitude'], data['Latitude'], 
+                                           c=data['Magnitude'], cmap='plasma', 
+                                           alpha=0.6, s=30)
+                        
+                        plt.colorbar(scatter, label='Magnitude')
+                        ax.set_xlabel('Longitude')
+                        ax.set_ylabel('Latitude')
+                        ax.set_title('Localisation des séismes - Zone Fani Maoré')
+                        ax.grid(True, alpha=0.3)
+                        
+                        st.pyplot(fig)
+                        plt.close()
+                    except Exception as e:
+                        st.error(f"Erreur graphique: {e}")
+                
+                # Statistiques spatiales
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Latitude min", f"{data['Latitude'].min():.4f}°")
+                    st.metric("Latitude max", f"{data['Latitude'].max():.4f}°")
+                with col2:
+                    st.metric("Longitude min", f"{data['Longitude'].min():.4f}°")
+                    st.metric("Longitude max", f"{data['Longitude'].max():.4f}°")
+        else:
+            st.error("❌ Données non trouvées")
+    
     elif page == "📈 Analyse Tendances":
         st.header("📈 Analyse des Tendances - Fani Maoré")
-        st.info("🔧 Module en cours de correction...")
         
+        if 'filtered_df' in st.session_state:
+            try:
+                # Ajouter pages au path
+                pages_path = str(Path(__file__).parent / "pages")
+                if pages_path not in sys.path:
+                    sys.path.insert(0, pages_path)
+                
+                # Import et lancement du module
+                from pages.Analyse_tendances_sismique import show_analyse_tendances
+                st.success("✅ Module Analyse Tendances chargé")
+                show_analyse_tendances()
+                
+            except ImportError as e:
+                st.warning(f"⚠️ Module Analyse Tendances non disponible: {e}")
+                st.info("Affichage d'une analyse simplifiée...")
+                
+                # Analyse simplifiée de secours
+                data = st.session_state.filtered_df
+                
+                if MATPLOTLIB_AVAILABLE:
+                    try:
+                        # Évolution temporelle
+                        daily_counts = data.groupby(data['Date_dt'].dt.date).size()
+                        
+                        fig, ax = plt.subplots(figsize=(14, 6))
+                        ax.plot(daily_counts.index, daily_counts.values, alpha=0.7)
+                        ax.set_title('Évolution temporelle - Fani Maoré')
+                        ax.set_xlabel('Date')
+                        ax.set_ylabel('Nombre de séismes')
+                        plt.xticks(rotation=45)
+                        st.pyplot(fig)
+                        plt.close()
+                        
+                        # Tendances par jour de la semaine
+                        jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+                        weekly_counts = data['JourSemaine'].value_counts().sort_index()
+                        
+                        fig, ax = plt.subplots(figsize=(10, 6))
+                        ax.bar(range(7), [weekly_counts.get(i, 0) for i in range(7)], alpha=0.7, color='orange')
+                        ax.set_title('Distribution hebdomadaire - Fani Maoré')
+                        ax.set_xlabel('Jour')
+                        ax.set_ylabel('Nombre de séismes')
+                        ax.set_xticks(range(7))
+                        ax.set_xticklabels(jours)
+                        st.pyplot(fig)
+                        plt.close()
+                    except Exception as e:
+                        st.error(f"Erreur graphique: {e}")
+        else:
+            st.error("❌ Données non trouvées")
+    
     elif page == "🔬 Analyse Caractéristiques":
         st.header("🔬 Analyse des Caractéristiques - Fani Maoré")
-        st.info("🔧 Module en cours de correction...")
+        
+        if 'filtered_df' in st.session_state:
+            try:
+                # Ajouter pages au path
+                pages_path = str(Path(__file__).parent / "pages")
+                if pages_path not in sys.path:
+                    sys.path.insert(0, pages_path)
+                
+                # Import et lancement du module
+                from pages.Analyse_caracteristiques_sismique import show_analyse_caracteristiques
+                st.success("✅ Module Analyse Caractéristiques chargé")
+                show_analyse_caracteristiques()
+                
+            except ImportError as e:
+                st.warning(f"⚠️ Module Analyse Caractéristiques non disponible: {e}")
+                st.info("Affichage d'une analyse simplifiée...")
+                
+                # Analyse simplifiée de secours
+                data = st.session_state.filtered_df
+                
+                if MATPLOTLIB_AVAILABLE:
+                    try:
+                        # Distribution magnitude vs profondeur
+                        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+                        
+                        # Distribution des magnitudes
+                        ax1.hist(data['Magnitude'], bins=20, alpha=0.7, color='skyblue')
+                        ax1.set_title('Distribution des magnitudes - Fani Maoré')
+                        ax1.set_xlabel('Magnitude')
+                        ax1.set_ylabel('Fréquence')
+                        
+                        # Distribution des profondeurs
+                        ax2.hist(data['Profondeur'], bins=20, alpha=0.7, color='lightcoral')
+                        ax2.set_title('Distribution des profondeurs - Fani Maoré')
+                        ax2.set_xlabel('Profondeur (km)')
+                        ax2.set_ylabel('Fréquence')
+                        
+                        st.pyplot(fig)
+                        plt.close()
+                        
+                        # Relation magnitude-profondeur
+                        fig, ax = plt.subplots(figsize=(10, 6))
+                        scatter = ax.scatter(data['Profondeur'], data['Magnitude'], alpha=0.6)
+                        ax.set_xlabel('Profondeur (km)')
+                        ax.set_ylabel('Magnitude')
+                        ax.set_title('Relation Magnitude vs Profondeur - Fani Maoré')
+                        ax.grid(True, alpha=0.3)
+                        st.pyplot(fig)
+                        plt.close()
+                    except Exception as e:
+                        st.error(f"Erreur graphique: {e}")
+                
+                # Statistiques
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.subheader("Statistiques Magnitude")
+                    mag_stats = data['Magnitude'].describe()
+                    stats_df = pd.DataFrame({
+                        'Statistique': mag_stats.index,
+                        'Valeur': [f"{val:.3f}" for val in mag_stats.values]
+                    })
+                    safe_dataframe_display(stats_df, hide_index=True, use_container_width=True)
+                    
+                with col2:
+                    st.subheader("Statistiques Profondeur")
+                    depth_stats = data['Profondeur'].describe()
+                    stats_df = pd.DataFrame({
+                        'Statistique': depth_stats.index,
+                        'Valeur': [f"{val:.1f} km" for val in depth_stats.values]
+                    })
+                    safe_dataframe_display(stats_df, hide_index=True, use_container_width=True)
+        else:
+            st.error("❌ Données non trouvées")
 
 else:
     st.error("❌ Impossible de charger les données")
+    
+    # Informations de debug
+    st.subheader("🔧 Informations de debug")
+    st.info("""
+    Si vous voyez cette erreur:
+    1. Vérifiez que le fichier `data/NewDataseisme.csv` existe
+    2. Vérifiez que le module `data_loader` est dans `utils/`
+    3. Redémarrez l'application
+    """)
