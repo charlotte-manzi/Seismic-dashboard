@@ -964,7 +964,7 @@ def analyser_potentiel_destructeur(df_filtered):
                 <div class="danger-alert">
                     <h4>⚠️ Séismes à surveiller</h4>
                     <p><strong>{len(seismes_dangereux)} séismes</strong> ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})</p>
-                    <p>Ces séismes représentent <strong>{pourcentage_dangereux:.1f}%</strong> des {len(df_clean)} séismes analysés</p>
+                    <p>Ces séismes représentent <strong>{pourcentage_dangereux:.1f}%</strong> des <strong>{len(df_clean)}</strong> séismes analysés</p>
                     <p><em>Note: Ce sont les 10% les plus dangereux par définition (quantile 90%)</em></p>
                 </div>
                 """, unsafe_allow_html=True)
