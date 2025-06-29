@@ -243,6 +243,17 @@ def prepare_seismic_characteristics(df):
         if col in df.columns:
             df[col] = clean_numeric_column(df[col])
     
+    # DIAGNOSTIC : Afficher des informations sur les données avant traitement
+    if 'Profondeur' in df.columns:
+        profondeur_stats = df['Profondeur'].describe()
+        if profondeur_stats['mean'] < 2:  # Si la profondeur moyenne est < 2 km
+            st.warning(f"⚠️ Profondeurs suspectes détectées (moyenne: {profondeur_stats['mean']:.3f} km). Possible problème d'unités.")
+            
+            # Vérifier si les profondeurs sont en km ou en centaines de mètres
+            if profondeur_stats['max'] < 10:  # Si max < 10, probablement en centaines de mètres
+                st.info("🔧 Correction automatique: Conversion des profondeurs de centaines de mètres vers kilomètres.")
+                df['Profondeur'] = df['Profondeur'] * 100  # Convertir en km
+    
     # Nettoyer toutes les colonnes qui pourraient être numériques
     for col in df.columns:
         if col not in ['Date', 'Localisation', 'Region'] and df[col].dtype == 'object':
@@ -854,22 +865,40 @@ def analyser_potentiel_destructeur(df_filtered):
                     
                     # Conversion sécurisée des dates
                     try:
-                        # Essayer différents formats de date
-                        top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date'], format='%d/%m/%y %H:%M', errors='coerce')
-                        if top_dangerous['Date'].isna().all():
-                            # Si le premier format échoue, essayer avec année complète
-                            top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date'], format='%d/%m/%Y %H:%M', errors='coerce')
-                        if top_dangerous['Date'].isna().all():
-                            # Si les formats échouent, utiliser l'inférence automatique
-                            top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date'], errors='coerce')
+                        # Créer une copie pour éviter les modifications sur l'original
+                        date_column = top_dangerous['Date'].copy()
                         
-                        # Formater les dates pour l'affichage
-                        top_dangerous['Date'] = top_dangerous['Date'].dt.strftime('%d/%m/%Y %H:%M')
-                    except:
-                        # En cas d'erreur, garder les dates comme chaînes
-                        pass
+                        # Essayer différents formats de date
+                        try:
+                            date_converted = pd.to_datetime(date_column, format='%d/%m/%y %H:%M', errors='coerce')
+                        except:
+                            try:
+                                date_converted = pd.to_datetime(date_column, format='%d/%m/%Y %H:%M', errors='coerce')
+                            except:
+                                date_converted = pd.to_datetime(date_column, errors='coerce')
+                        
+                        # Si la conversion a réussi pour certaines dates
+                        if date_converted.notna().any():
+                            # Formater seulement les dates valides
+                            top_dangerous['Date'] = date_converted.dt.strftime('%d/%m/%Y %H:%M').fillna('Date inconnue')
+                        else:
+                            # Garder les dates originales si aucune conversion ne fonctionne
+                            top_dangerous['Date'] = top_dangerous['Date'].fillna('Date inconnue')
+                    
+                    except Exception as e:
+                        # En cas d'erreur, remplacer les valeurs manquantes
+                        top_dangerous['Date'] = top_dangerous['Date'].fillna('Date inconnue')
+                    
+                    # Arrondir les valeurs numériques pour un meilleur affichage
+                    top_dangerous['Magnitude'] = top_dangerous['Magnitude'].round(2)
+                    top_dangerous['Profondeur'] = top_dangerous['Profondeur'].round(2)
+                    top_dangerous['Potentiel_Destructeur'] = top_dangerous['Potentiel_Destructeur'].round(2)
                     
                     top_dangerous.columns = ['Date', 'Magnitude', 'Profondeur (km)', 'Potentiel']
+                    
+                    # Afficher un message de debug pour vérifier les données
+                    st.info(f"ℹ️ Affichage des {len(top_dangerous)} séismes les plus dangereux")
+                    
                     st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
                 else:
                     # Si pas de colonne Date, afficher sans
