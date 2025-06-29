@@ -226,6 +226,35 @@ def prepare_seismic_characteristics(df):
     
     df = df.copy()
     
+    # CORRECTION : Nettoyer les types de données pour éviter les erreurs PyArrow
+    def clean_numeric_column(column):
+        """Nettoyer une colonne numérique qui peut contenir des chaînes"""
+        if column.dtype == 'object':
+            try:
+                # Convertir en numérique, forcer les erreurs à NaN
+                return pd.to_numeric(column, errors='coerce')
+            except:
+                return column
+        return column
+    
+    # Nettoyer les colonnes numériques principales
+    numeric_columns = ['Magnitude', 'Profondeur', 'Latitude', 'Longitude']
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = clean_numeric_column(df[col])
+    
+    # Nettoyer toutes les colonnes qui pourraient être numériques
+    for col in df.columns:
+        if col not in ['Date', 'Localisation', 'Region'] and df[col].dtype == 'object':
+            # Essayer de convertir en numérique si possible
+            try:
+                numeric_series = pd.to_numeric(df[col], errors='coerce')
+                # Si plus de 50% des valeurs sont numériques, on garde la conversion
+                if numeric_series.notna().sum() / len(df) > 0.5:
+                    df[col] = numeric_series
+            except:
+                pass
+    
     # Correction des profondeurs négatives
     if (df['Profondeur'] < 0).any():
         st.warning(f"⚠️ {(df['Profondeur'] < 0).sum()} valeurs de profondeur négatives détectées. Application de la valeur absolue.")
@@ -327,6 +356,11 @@ def prepare_seismic_characteristics(df):
         return 'Inconnu'
     
     df['Potentiel_Categorie'] = df['Potentiel_Destructeur'].apply(categorize_potentiel)
+    
+    # CORRECTION FINALE : S'assurer que toutes les colonnes numériques sont bien typées
+    for col in df.columns:
+        if col in ['Magnitude', 'Profondeur', 'Energie', 'Potentiel_Destructeur', 'Latitude', 'Longitude']:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
     
     return df
 
