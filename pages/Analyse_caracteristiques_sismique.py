@@ -161,10 +161,10 @@ def show_analyse_caracteristiques():
     """, unsafe_allow_html=True)
     
     # Section d'introduction
-    st.markdown("""
+    st.markdown(f"""
     <div class="intro-section">
         <p style="text-align: center; font-weight: bold; line-height: 1.8; color: #155724; font-size: 16px; margin: 0;">
-            ✅ <strong>15407 séismes réels chargés</strong><br><br>
+            ✅ <strong>{len(df)} séismes chargés et analysés</strong><br><br>
             Ce module permet d'analyser les <strong>caractéristiques physiques</strong> des séismes. 
             Explorez la <strong>distribution des magnitudes</strong>, <strong>profondeurs</strong>, 
             le <strong>potentiel destructeur</strong> et l'<strong>énergie libérée</strong>. 
@@ -203,23 +203,23 @@ def show_analyse_caracteristiques():
         help="Sélectionnez le type d'analyse physique à effectuer"
     )
     
-    # Filtres avancés spécifiques aux caractéristiques
-    show_advanced_filters(df)
+    # CORRECTION : Récupérer le DataFrame filtré depuis les filtres avancés
+    df_filtered = show_advanced_filters(df)
     
-    # Afficher les métriques clés
-    show_key_metrics(df)
+    # Afficher les métriques clés avec les données filtrées
+    show_key_metrics(df_filtered)
     
-    # Exécuter l'analyse sélectionnée
+    # Exécuter l'analyse sélectionnée avec les données filtrées
     if analysis_type == "Distribution des magnitudes":
-        analyser_distribution_magnitudes(df)
+        analyser_distribution_magnitudes(df_filtered)
     elif analysis_type == "Distribution des profondeurs":
-        analyser_distribution_profondeurs(df)
+        analyser_distribution_profondeurs(df_filtered)
     elif analysis_type == "Relation magnitude/profondeur":
-        analyser_relation_magnitude_profondeur(df)
+        analyser_relation_magnitude_profondeur(df_filtered)
     elif analysis_type == "Potentiel destructeur":
-        analyser_potentiel_destructeur(df)
+        analyser_potentiel_destructeur(df_filtered)
     elif analysis_type == "Énergie libérée":
-        analyser_energie(df)
+        analyser_energie(df_filtered)
 
 def prepare_seismic_characteristics(df):
     """Préparer les caractéristiques sismiques calculées - VERSION CORRIGÉE"""
@@ -321,13 +321,18 @@ def prepare_seismic_characteristics(df):
     
     df['Profondeur_Categorie'] = df['Profondeur'].apply(categorize_depth)
     
-    # Calcul de l'énergie libérée (formule: E = 10^(1.5*M+4.8))
-    # CORRECTION : Vérifier les valeurs avant le calcul
+    # Calcul de l'énergie libérée (formule de Gutenberg-Richter : E = 10^(1.5*M+4.8))
+    # ATTENTION : Ceci est une approximation basée uniquement sur la magnitude
     df['Energie'] = np.where(
         df['Magnitude'].notna() & (df['Magnitude'] >= 0),
         10**(1.5 * df['Magnitude'] + 4.8),
         np.nan
     )
+    
+    # Ajouter un avertissement sur l'approximation
+    if 'Energie' in df.columns and not hasattr(st.session_state, 'energy_warning_shown'):
+        st.info("ℹ️ **Note sur l'énergie** : Calculée avec la formule de Gutenberg-Richter (approximation basée sur la magnitude). Incertitude typique : facteur 2-10.")
+        st.session_state.energy_warning_shown = True
     
     # Calcul du potentiel destructeur - VERSION CORRIGÉE
     # Formule: Magnitude * (1 + 70/profondeur)
@@ -369,9 +374,34 @@ def prepare_seismic_characteristics(df):
     df['Potentiel_Categorie'] = df['Potentiel_Destructeur'].apply(categorize_potentiel)
     
     # CORRECTION FINALE : S'assurer que toutes les colonnes numériques sont bien typées
+    numeric_cols_to_fix = ['Magnitude', 'Profondeur', 'Energie', 'Potentiel_Destructeur', 'Latitude', 'Longitude']
+    for col in numeric_cols_to_fix:
+        if col in df.columns:
+            # Conversion agressive pour éliminer les problèmes PyArrow
+            df[col] = pd.to_numeric(df[col], errors='coerce').astype('float64')
+    
+    # Traiter spécifiquement les colonnes catégorielles
+    categorical_cols = ['Magnitude_Categorie', 'Profondeur_Categorie', 'Potentiel_Categorie']
+    for col in categorical_cols:
+        if col in df.columns:
+            df[col] = df[col].astype('string')
+    
+    # Traiter la colonne Date
+    if 'Date' in df.columns:
+        df['Date'] = df['Date'].astype('string')
+    
+    # SOLUTION DRASTIQUE : Nettoyer TOUTES les colonnes object problématiques
     for col in df.columns:
-        if col in ['Magnitude', 'Profondeur', 'Energie', 'Potentiel_Destructeur', 'Latitude', 'Longitude']:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+        if df[col].dtype == 'object':
+            # Essayer de convertir en numérique
+            try:
+                numeric_version = pd.to_numeric(df[col], errors='coerce')
+                if numeric_version.notna().sum() > len(df) * 0.7:  # Si >70% sont numériques
+                    df[col] = numeric_version.astype('float64')
+                else:
+                    df[col] = df[col].astype('string')  # Sinon, forcer en string
+            except:
+                df[col] = df[col].astype('string')
     
     return df
 
@@ -390,7 +420,8 @@ def show_advanced_filters(df):
                 "Catégories de magnitude",
                 available_mag_cats,
                 default=available_mag_cats,
-                help="Filtrer par niveau de magnitude"
+                help="Filtrer par niveau de magnitude",
+                key="filter_magnitude_cats"
             )
         
         with col2:
@@ -402,7 +433,8 @@ def show_advanced_filters(df):
                 "Catégories de profondeur",
                 available_depth_cats,
                 default=available_depth_cats,
-                help="Filtrer par niveau de profondeur"
+                help="Filtrer par niveau de profondeur",
+                key="filter_depth_cats"
             )
         
         with col3:
@@ -414,22 +446,29 @@ def show_advanced_filters(df):
                 "Potentiel destructeur",
                 available_pot_cats,
                 default=available_pot_cats,
-                help="Filtrer par potentiel de destruction"
+                help="Filtrer par potentiel de destruction",
+                key="filter_potential_cats"
             )
+        
+        # CORRECTION : Retourner le DataFrame filtré au lieu de modifier session_state
+        df_filtered = df.copy()
         
         # Appliquer les filtres avancés
         if selected_mag_cats:
-            df = df[df['Magnitude_Categorie'].isin(selected_mag_cats)]
+            df_filtered = df_filtered[df_filtered['Magnitude_Categorie'].isin(selected_mag_cats)]
         if selected_depth_cats:
-            df = df[df['Profondeur_Categorie'].isin(selected_depth_cats)]
+            df_filtered = df_filtered[df_filtered['Profondeur_Categorie'].isin(selected_depth_cats)]
         if selected_pot_cats:
-            df = df[df['Potentiel_Categorie'].isin(selected_pot_cats)]
+            df_filtered = df_filtered[df_filtered['Potentiel_Categorie'].isin(selected_pot_cats)]
         
-        # Mettre à jour les données filtrées
-        st.session_state.filtered_df = df
+        # Afficher le nombre de séismes après filtrage
+        if len(df_filtered) != len(df):
+            st.info(f"📊 Filtres appliqués : {len(df_filtered)} séismes sélectionnés sur {len(df)} totaux")
         
-        if len(df) == 0:
+        if len(df_filtered) == 0:
             st.warning("⚠️ Aucune donnée ne correspond aux filtres avancés.")
+        
+        return df_filtered
 
 def show_key_metrics(df):
     """Afficher les métriques clés des caractéristiques sismiques"""
@@ -717,12 +756,20 @@ def analyser_relation_magnitude_profondeur(df_filtered):
         significance = "significative" if p_value < 0.05 else "non significative"
         direction = "positive" if slope > 0 else "négative"
         
+        # Gestion de l'affichage des p-values très petites
+        if p_value < 1e-10:
+            p_display = "< 1e-10 (extrêmement significative)"
+        elif p_value < 1e-6:
+            p_display = f"{p_value:.2e} (très significative)"
+        else:
+            p_display = f"{p_value:.6f}"
+        
         st.markdown(f"""
         <div class="stats-container">
             <h4>📊 Analyse de corrélation</h4>
             <p><strong>Coefficient de corrélation (r) :</strong> {r_value:.3f}</p>
             <p><strong>Coefficient de détermination (r²) :</strong> {r_value**2:.3f}</p>
-            <p><strong>p-value :</strong> {p_value:.4f}</p>
+            <p><strong>p-value :</strong> {p_display}</p>
             <p><strong>Conclusion :</strong> Corrélation {direction} {significance}</p>
         </div>
         """, unsafe_allow_html=True)
@@ -741,6 +788,41 @@ def analyser_potentiel_destructeur(df_filtered):
     """Analyser le potentiel destructeur - VERSION CORRIGÉE"""
     
     st.subheader("⚠️ Analyse du Potentiel Destructeur")
+    
+    # BOÎTE D'INFORMATION sur le potentiel destructeur
+    st.markdown("""
+    <div class="info-section" style="background-color: #fff3cd; padding: 20px; border-radius: 15px; margin: 15px 0; border-left: 4px solid #ffc107; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h4 style="color: #856404; margin-top: 0;">🧮 À propos du Potentiel Destructeur</h4>
+        
+        <h5 style="color: #856404;">📐 Formule utilisée :</h5>
+        <p style="color: #856404; font-family: monospace; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 5px;">
+            <strong>Potentiel = Magnitude × (1 + 70/Profondeur)</strong>
+        </p>
+        
+        <h5 style="color: #856404;">🎯 Principe :</h5>
+        <ul style="color: #856404;">
+            <li><strong>Plus la magnitude est élevée</strong> → Plus le potentiel destructeur augmente</li>
+            <li><strong>Plus le séisme est superficiel</strong> → Plus il est destructeur en surface</li>
+            <li><strong>Coefficient 70</strong> : Facteur d'amplification pour les séismes peu profonds</li>
+        </ul>
+        
+        <h5 style="color: #856404;">⚠️ Limitations importantes :</h5>
+        <ul style="color: #856404;">
+            <li>📊 <strong>Indicateur relatif</strong> uniquement (pour comparer les séismes entre eux)</li>
+            <li>🏗️ <strong>Ne remplace pas</strong> les études d'ingénierie sismique professionnelles</li>
+            <li>🌍 <strong>N'inclut pas</strong> : géologie locale, type de sol, distance épicentrale</li>
+            <li>🏘️ <strong>N'évalue pas</strong> l'impact réel sur les infrastructures</li>
+        </ul>
+        
+        <h5 style="color: #856404;">🔍 Fonctionnalité de cette analyse :</h5>
+        <ul style="color: #856404;">
+            <li>📈 <strong>Distribution</strong> : Voir la répartition des niveaux de dangerosité</li>
+            <li>🏆 <strong>Classement</strong> : Identifier les séismes les plus préoccupants</li>
+            <li>📊 <strong>Statistiques</strong> : Comprendre les tendances de votre dataset</li>
+            <li>🎯 <strong>Catégorisation</strong> : Regroupement en niveaux (Très faible → Très élevé)</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
     
     if len(df_filtered) == 0:
         st.warning("Aucune donnée pour l'analyse du potentiel destructeur.")
@@ -849,11 +931,13 @@ def analyser_potentiel_destructeur(df_filtered):
             seismes_dangereux = df_clean[df_clean['Potentiel_Destructeur'] >= seuil_danger]
             
             if len(seismes_dangereux) > 0:
+                pourcentage_dangereux = len(seismes_dangereux)/len(df_clean)*100
                 st.markdown(f"""
                 <div class="danger-alert">
                     <h4>⚠️ Séismes à surveiller</h4>
                     <p><strong>{len(seismes_dangereux)} séismes</strong> ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})</p>
-                    <p>Ces séismes représentent <strong>{len(seismes_dangereux)/len(df_clean)*100:.1f}%</strong> de l'ensemble</p>
+                    <p>Ces séismes représentent <strong>{pourcentage_dangereux:.1f}%</strong> des {len(df_clean)} séismes analysés</p>
+                    <p><em>Note: Ce sont les 10% les plus dangereux par définition (quantile 90%)</em></p>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -899,6 +983,19 @@ def analyser_potentiel_destructeur(df_filtered):
                     # Afficher un message de debug pour vérifier les données
                     st.info(f"ℹ️ Affichage des {len(top_dangerous)} séismes les plus dangereux")
                     
+                    # CORRECTION PyArrow : Forcer les types avant affichage
+                    for col in top_dangerous.columns:
+                        if col not in ['Date']:
+                            top_dangerous[col] = pd.to_numeric(top_dangerous[col], errors='coerce')
+                    
+                    # Nettoyer pour PyArrow
+                    top_dangerous = top_dangerous.astype({
+                        'Date': 'string',
+                        'Magnitude': 'float64',
+                        'Profondeur (km)': 'float64', 
+                        'Potentiel': 'float64'
+                    })
+                    
                     st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
                 else:
                     # Si pas de colonne Date, afficher sans
@@ -931,15 +1028,18 @@ def analyser_potentiel_destructeur(df_filtered):
             stats_data = {
                 "Statistique": ["Nombre total", "Minimum", "Maximum", "Moyenne", "Médiane", "Écart-type"],
                 "Valeur": [
-                    len(df_clean),
-                    f"{df_clean['Potentiel_Destructeur'].min():.2f}",
-                    f"{df_clean['Potentiel_Destructeur'].max():.2f}",
-                    f"{df_clean['Potentiel_Destructeur'].mean():.2f}",
-                    f"{df_clean['Potentiel_Destructeur'].median():.2f}",
-                    f"{df_clean['Potentiel_Destructeur'].std():.2f}"
+                    str(len(df_clean)),
+                    f"{float(df_clean['Potentiel_Destructeur'].min()):.2f}",
+                    f"{float(df_clean['Potentiel_Destructeur'].max()):.2f}",
+                    f"{float(df_clean['Potentiel_Destructeur'].mean()):.2f}",
+                    f"{float(df_clean['Potentiel_Destructeur'].median()):.2f}",
+                    f"{float(df_clean['Potentiel_Destructeur'].std()):.2f}"
                 ]
             }
-            st.dataframe(pd.DataFrame(stats_data), hide_index=True)
+            # Forcer les types pour éviter les erreurs PyArrow
+            stats_df = pd.DataFrame(stats_data)
+            stats_df = stats_df.astype({'Statistique': 'string', 'Valeur': 'string'})
+            st.dataframe(stats_df, hide_index=True)
         
         with col2:
             if len(order) > 0:
@@ -954,12 +1054,19 @@ def analyser_potentiel_destructeur(df_filtered):
                     count = potentiel_counts[category] if category in potentiel_counts.index else 0
                     percentage = count / len(df_clean) * 100 if len(df_clean) > 0 else 0
                     category_data.append({
-                        "Catégorie": category,
-                        "Nombre": int(count) if not pd.isna(count) else 0,
-                        "Pourcentage": f"{percentage:.1f}%"
+                        "Catégorie": str(category),
+                        "Nombre": str(int(count) if not pd.isna(count) else 0),
+                        "Pourcentage": f"{float(percentage):.1f}%"
                     })
                 
-                st.dataframe(pd.DataFrame(category_data), hide_index=True)
+                # Forcer les types pour éviter les erreurs PyArrow
+                category_df = pd.DataFrame(category_data)
+                category_df = category_df.astype({
+                    'Catégorie': 'string',
+                    'Nombre': 'string', 
+                    'Pourcentage': 'string'
+                })
+                st.dataframe(category_df, hide_index=True)
     
     except Exception as e:
         st.error(f"Erreur lors du calcul des statistiques: {str(e)}")
@@ -968,6 +1075,48 @@ def analyser_energie(df_filtered):
     """Analyser l'énergie libérée par les séismes"""
     
     st.subheader("⚡ Analyse de l'Énergie Libérée")
+    
+    # BOÎTE D'INFORMATION sur l'énergie libérée
+    st.markdown("""
+    <div class="info-section" style="background-color: #d1ecf1; padding: 20px; border-radius: 15px; margin: 15px 0; border-left: 4px solid #bee5eb; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <h4 style="color: #0c5460; margin-top: 0;">⚡ À propos de l'Énergie Sismique</h4>
+        
+        <h5 style="color: #0c5460;">📐 Formule de Gutenberg-Richter :</h5>
+        <p style="color: #0c5460; font-family: monospace; background: rgba(255,255,255,0.3); padding: 10px; border-radius: 5px;">
+            <strong>E = 10^(1.5 × Magnitude + 4.8)</strong> Joules
+        </p>
+        
+        <h5 style="color: #0c5460;">🎯 Principe physique :</h5>
+        <ul style="color: #0c5460;">
+            <li><strong>Énergie totale</strong> libérée lors de la rupture de la faille</li>
+            <li><strong>Échelle logarithmique</strong> : +1 magnitude = ×32 en énergie</li>
+            <li><strong>Formule universelle</strong> utilisée en sismologie mondiale</li>
+        </ul>
+        
+        <h5 style="color: #0c5460;">⚠️ Précision et limitations :</h5>
+        <ul style="color: #0c5460;">
+            <li>✅ <strong>Approximation scientifique standard</strong> (basée sur la magnitude uniquement)</li>
+            <li>⚡ <strong>Incertitude typique</strong> : facteur 2 à 10 (selon mécanisme de rupture)</li>
+            <li>🎯 <strong>Plus précise pour</strong> magnitudes > 4.0</li>
+            <li>🚫 <strong>N'inclut pas</strong> : mécanisme focal, géologie, durée de rupture</li>
+        </ul>
+        
+        <h5 style="color: #0c5460;">🔬 Fonctionnalité de cette analyse :</h5>
+        <ul style="color: #0c5460;">
+            <li>📊 <strong>Distribution énergétique</strong> : Visualiser la répartition des énergies</li>
+            <li>📈 <strong>Évolution temporelle</strong> : Suivre l'accumulation d'énergie dans le temps</li>
+            <li>🏷️ <strong>Contribution par magnitude</strong> : Voir quelles catégories libèrent le plus d'énergie</li>
+            <li>📏 <strong>Relation théorique</strong> : Vérifier la conformité à la loi de Gutenberg-Richter</li>
+            <li>🔢 <strong>Ordres de grandeur</strong> : Comprendre la puissance relative des séismes</li>
+        </ul>
+        
+        <h5 style="color: #0c5460;">💡 Interprétation :</h5>
+        <p style="color: #0c5460;">
+            Cette analyse vous permet de <strong>comparer quantitativement</strong> la puissance des séismes 
+            et d'identifier les <strong>événements les plus énergétiques</strong> de votre dataset.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     if len(df_filtered) == 0:
         st.warning("Aucune donnée pour l'analyse de l'énergie.")
