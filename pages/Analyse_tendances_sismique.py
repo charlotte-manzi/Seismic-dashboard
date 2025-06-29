@@ -38,22 +38,68 @@ def apply_custom_css():
     """Appliquer le CSS personnalisé pour les tendances"""
     st.markdown("""
     <style>
-    .trends-header {
-        background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
+    /* Main dashboard background */
+    .main > div {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+    
+    /* Dashboard container styling */
+    .main-dashboard {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    /* Card-style containers for each section */
+    .dashboard-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin: 20px 0;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Filter section as a distinct card */
+    .filter-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 1.5rem;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
+        border-radius: 15px;
+        padding: 25px;
+        margin: 20px 0;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    /* Chart containers */
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin: 20px 0;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+        border-left: 5px solid #3498db;
+    }
+
+    /* Metrics cards */
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
         text-align: center;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        margin: 10px 0;
     }
     
     .intro-section {
-        background-color: #d4edda;
-        padding: 20px;
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        padding: 25px;
         border-radius: 15px;
-        margin: 15px 0;
-        border-left: 4px solid #28a745;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin: 20px 0;
+        border-left: 5px solid #28a745;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     }
     
     .intro-text {
@@ -64,70 +110,61 @@ def apply_custom_css():
         text-align: center;
     }
     
-    .analysis-container {
-        background-color: #f8f9fa;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-        border-left: 4px solid #8e44ad;
-    }
-    
     .statistical-result {
-        background-color: #e8f5e8;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-        border-left: 4px solid #2ecc71;
+        background: linear-gradient(135deg, #e8f5e8 0%, #d1ecf1 100%);
+        padding: 20px;
+        border-radius: 12px;
+        margin: 15px 0;
+        border-left: 5px solid #2ecc71;
         color: #155724;
         font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     
     .statistical-result h4 {
         color: #155724;
-        margin-bottom: 10px;
+        margin-bottom: 15px;
         font-weight: bold;
     }
     
     .statistical-result p {
         color: #155724;
-        margin: 5px 0;
+        margin: 8px 0;
         font-weight: 500;
     }
     
-    .warning-result {
-        background-color: #fff3cd;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-        border-left: 4px solid #ffc107;
-    }
-    
     .trend-metric {
-        background-color: #e3f2fd;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.5rem 0;
-        border-left: 4px solid #2196f3;
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 20px;
+        border-radius: 12px;
+        margin: 15px 0;
+        border-left: 5px solid #2196f3;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     
     .filter-label {
         font-weight: 600;
-        color: #495057;
-        margin-bottom: 5px;
-        font-size: 13px;
+        color: white;
+        margin-bottom: 8px;
+        font-size: 14px;
     }
     
+    /* Slider styling */
     .stSlider > div {
         padding-top: 0px !important;
-        padding-bottom: 5px !important;
+        padding-bottom: 8px !important;
+    }
+    
+    .stSlider > div > div > div > div {
+        background-color: #28a745 !important;
     }
     
     .stMultiSelect {
-        margin-bottom: 5px !important;
+        margin-bottom: 8px !important;
     }
     
     .stSelectbox {
-        margin-bottom: 5px !important;
+        margin-bottom: 8px !important;
     }
     
     /* Masquer les labels par défaut */
@@ -143,13 +180,59 @@ def apply_custom_css():
         display: none !important;
     }
     
-    .filter-section {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 20px;
-        border-radius: 15px;
-        margin: 15px 0;
-        border-left: 4px solid #8e44ad;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 24px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(135deg, #218838 0%, #1e7e8c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+    }
+    
+    /* Metrics styling */
+    .stMetric {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+    
+    /* Section headers */
+    h1, h2, h3, h4 {
+        color: #2c3e50;
+        font-weight: 700;
+    }
+    
+    /* Tabs styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: white;
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        background-color: transparent;
+        border-radius: 8px;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -160,15 +243,17 @@ def show_analyse_tendances():
     # Appliquer le style personnalisé
     apply_custom_css()
     
-    # Section d'introduction (sans header redondant)
+    # Section d'introduction avec style dashboard
     st.markdown("""
-    <div class="intro-section">
-        <p class="intro-text" style="text-align: center; font-weight: bold; line-height: 1.8;">
-            ✅ <strong>15407 séismes réels chargés</strong><br><br>
-            Ce tableau de bord permet d'analyser les <strong>tendances temporelles</strong> de l'activité sismique. 
-            Vous pouvez explorer les <strong>patterns saisonniers</strong>, <strong>journaliers</strong>, les <strong>cycles hebdomadaires</strong> et les <strong>tendances à long terme</strong>. 
-            📊 Utilisez les filtres ci-dessous pour personnaliser votre analyse selon vos besoins spécifiques.
-        </p>
+    <div class="dashboard-card">
+        <div class="intro-section">
+            <p class="intro-text" style="text-align: center; font-weight: bold; line-height: 1.8;">
+                ✅ <strong>15407 séismes réels chargés</strong><br><br>
+                Ce tableau de bord permet d'analyser les <strong>tendances temporelles</strong> de l'activité sismique. 
+                Vous pouvez explorer les <strong>patterns saisonniers</strong>, <strong>journaliers</strong>, les <strong>cycles hebdomadaires</strong> et les <strong>tendances à long terme</strong>. 
+                📊 Utilisez les filtres ci-dessous pour personnaliser votre analyse selon vos besoins spécifiques.
+            </p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -183,7 +268,7 @@ def show_analyse_tendances():
         st.warning("⚠️ Aucune donnée ne correspond aux filtres sélectionnés.")
         return
     
-    # Section des filtres
+    # Section des filtres avec style dashboard
     df_filtered = show_trends_filters(df_original)
     
     if df_filtered is None or len(df_filtered) == 0:
@@ -214,6 +299,8 @@ def show_analyse_tendances():
 
 def show_trends_filters(df):
     """Afficher les filtres spécifiques à l'analyse des tendances (sans filtres avancés)"""
+    
+    st.markdown('<div class="filter-card">', unsafe_allow_html=True)
     
     with st.container():
         
@@ -331,6 +418,8 @@ def show_trends_filters(df):
                 type="primary"
             )
     
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Appliquer les filtres (version simplifiée sans filtres avancés)
     df_filtered = apply_trends_filters_simple(
         df, annees_range, selected_mois, magnitude_range, profondeur_range, selected_saisons
@@ -340,7 +429,8 @@ def show_trends_filters(df):
     st.session_state.trends_filtered_df = df_filtered
     st.session_state.selected_trends_analysis_type = analysis_type
     
-    # Afficher les résultats de manière compacte
+    # Afficher les résultats de manière compacte dans une carte dashboard
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     if len(df_filtered) == 0:
         st.error("❌ Aucune donnée ne correspond aux filtres")
     else:
@@ -357,6 +447,8 @@ def show_trends_filters(df):
             if len(df_filtered) > 0:
                 date_range = (df_filtered['Date_dt'].max() - df_filtered['Date_dt'].min()).days
                 st.metric("📅 Période", f"{date_range} jours")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     return df_filtered
 
@@ -474,6 +566,7 @@ def prepare_temporal_components(df):
 def show_data_summary(df):
     """Afficher un résumé des données pour l'analyse des tendances"""
     
+    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     st.markdown("### 📋 Résumé des Données Analysées")
     
     col1, col2, col3, col4 = st.columns(4)
@@ -492,10 +585,13 @@ def show_data_summary(df):
     with col4:
         period_days = (df['Date'].max() - df['Date'].min()).days
         st.metric("⏱️ Période totale", f"{period_days} jours")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def analyser_tendances_saisonnieres(df_filtered):
     """Analyser les tendances saisonnières avec tests statistiques"""
     
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("🌸 Analyse des Tendances Saisonnières")
     
     if len(df_filtered) == 0:
@@ -657,10 +753,13 @@ def analyser_tendances_saisonnieres(df_filtered):
         
         stats_df = pd.DataFrame(stats_data)
         st.dataframe(stats_df, use_container_width=True, hide_index=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def analyser_tendances_journalieres(df_filtered):
     """Analyser les tendances journalières et cycles hebdomadaires"""
     
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("🕐 Analyse des Tendances Journalières")
     
     if len(df_filtered) == 0:
@@ -810,15 +909,19 @@ def analyser_tendances_journalieres(df_filtered):
             <p><strong>Interprétation :</strong> {'Le weekend a proportionnellement plus de séismes' if ratio_observe > ratio_attendu else 'Distribution relativement uniforme'}</p>
         </div>
         """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def analyser_tendances_long_terme(df_filtered):
     """Analyser les tendances à long terme avec régression"""
     
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("📊 Analyse des Tendances à Long Terme")
     
     annees_uniques = df_filtered['Annee'].unique()
     if len(annees_uniques) < 2:
         st.warning(f"Cette analyse nécessite au moins 2 années. Années disponibles : {', '.join(map(str, sorted(annees_uniques)))}")
+        st.markdown('</div>', unsafe_allow_html=True)
         return
     
     # Regrouper par mois pour l'analyse des séries temporelles
@@ -979,14 +1082,18 @@ def analyser_tendances_long_terme(df_filtered):
             df_annuel[col] = df_annuel[col].round(2)
     
     st.dataframe(df_annuel, use_container_width=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 def analyser_cycles_periodicites(df_filtered):
     """Analyser les cycles et périodicités dans les données"""
     
+    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("🔄 Analyse des Cycles et Périodicités")
     
     if len(df_filtered) < 100:
         st.warning(f"Cette analyse nécessite un grand nombre de données (>100). Actuellement : {len(df_filtered)} séismes.")
+        st.markdown('</div>', unsafe_allow_html=True)
         return
     
     # Créer une série temporelle journalière
@@ -1063,6 +1170,8 @@ def analyser_cycles_periodicites(df_filtered):
             <p><strong>Conclusion :</strong> {'Cycle hebdomadaire significatif détecté' if p < 0.05 else 'Pas de cycle hebdomadaire significatif'}</p>
         </div>
         """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Fonction principale qui peut être appelée depuis app.py
 def main():
