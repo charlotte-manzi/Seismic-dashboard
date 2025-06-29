@@ -38,20 +38,19 @@ def apply_custom_css():
     """Appliquer le CSS personnalisé pour les tendances"""
     st.markdown("""
     <style>
-    /* Fix main background gradient */
-    .stApp > div:first-child {
+    /* Fix main background gradient - more targeted */
+    .stApp {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
-        min-height: 100vh;
     }
     
-    .main > div {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
-        min-height: 100vh;
+    .main .block-container {
+        background: transparent !important;
+        padding-top: 1rem !important;
     }
     
     /* Dashboard container styling */
     .main-dashboard {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        background: transparent;
         min-height: 100vh;
         padding: 20px;
     }
