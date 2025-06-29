@@ -543,6 +543,160 @@ def analyser_tendances_saisonnieres(df_filtered):
     st.pyplot(fig)
     plt.close()
     
+    # Test statistique Chi²
+    if len(mois_counts) >= 6:  # Au moins 6 mois pour un test valide
+        observed_values = [mois_dict[i] for i in range(1, 13)]
+        chi2, p = stats.chisquare(observed_values)
+        
+        st.markdown(f"""
+        <div class="statistical-result">
+            <h4>🧮 Test Chi² d'uniformité</h4>
+            <p><strong>Chi² =</strong> {chi2:.2f}</p>
+            <p><strong>p-value =</strong> {p:.4f}</p>
+            <p><strong>Interprétation :</strong> {'Il existe une variation saisonnière statistiquement significative' if p < 0.05 else 'La distribution mensuelle semble uniforme (pas de tendance saisonnière significative)'}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # 2. Heatmap par mois et année
+    if len(df_filtered['Annee'].unique()) > 1:
+        st.markdown("#### 🔥 Heatmap mensuelle par année")
+        
+        try:
+            heatmap_data = df_filtered.groupby(['Annee', 'Mois']).size().unstack(fill_value=0)
+            
+            # S'assurer que toutes les colonnes existent
+            for m in range(1, 13):
+                if m not in heatmap_data.columns:
+                    heatmap_data[m] = 0
+            
+            heatmap_data = heatmap_data.reindex(sorted(heatmap_data.columns), axis=1)
+            
+            # Colormap personnalisée
+            colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", 
+                     "#4292c6", "#2171b5", "#08519c", "#08306b"]
+            cmap = LinearSegmentedColormap.from_list("custom_blues", colors)
+            
+            fig, ax = plt.subplots(figsize=(14, 8))
+            sns.heatmap(heatmap_data, cmap=cmap, annot=True, fmt="d", linewidths=.5, ax=ax)
+            ax.set_title('Nombre de séismes par mois et par année')
+            ax.set_xlabel('Mois')
+            ax.set_ylabel('Année')
+            ax.set_xticklabels([mois_noms[i-1] for i in heatmap_data.columns], rotation=45)
+            
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+            
+        except Exception as e:
+            st.warning(f"Impossible de créer la heatmap: {e}")
+    
+    # 3. Magnitude moyenne par mois
+    st.markdown("#### ⚡ Magnitude moyenne par mois")
+    
+    mag_means = df_filtered.groupby('Mois')['Magnitude'].mean()
+    
+    fig, ax = plt.subplots(figsize=(14, 6))
+    mois_avec_donnees = sorted(mag_means.index)
+    bars = ax.bar(mois_avec_donnees, mag_means.values, color='orange', alpha=0.8)
+    
+    # Ajouter les valeurs sur les barres
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{height:.2f}', ha='center', va='bottom', fontsize=10)
+    
+    ax.set_title('Magnitude moyenne des séismes par mois')
+    ax.set_xlabel('Mois')
+    ax.set_ylabel('Magnitude moyenne')
+    ax.set_xticks(mois_avec_donnees)
+    ax.set_xticklabels([mois_noms[int(i)-1] for i in mois_avec_donnees], rotation=45)
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # 4. Analyse par saison
+    st.markdown("#### 🍂 Analyse saisonnière")
+    
+    season_counts = df_filtered.groupby('Saison').size()
+    season_order = ['Hiver', 'Printemps', 'Été', 'Automne']
+    season_counts = season_counts.reindex([s for s in season_order if s in season_counts.index])
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.bar(season_counts.index, season_counts.values, 
+                  color=['lightblue', 'lightgreen', 'orange', 'brown'], alpha=0.8)
+    
+    # Ajouter les valeurs et pourcentages
+    for bar in bars:
+        height = bar.get_height()
+        percentage = height / len(df_filtered) * 100
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{int(height)}\n({percentage:.1f}%)', 
+               ha='center', va='bottom', fontsize=11, fontweight='bold')
+    
+    ax.set_title('Nombre de séismes par saison')
+    ax.set_xlabel('Saison')
+    ax.set_ylabel('Nombre de séismes')
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # Statistiques par saison
+    if len(season_counts) > 0:
+        st.markdown("#### 📋 Statistiques saisonnières")
+        
+        stats_data = []
+        for saison, count in season_counts.items():
+            percentage = count / len(df_filtered) * 100
+            stats_data.append({
+                "Saison": saison,
+                "Nombre de séismes": count,
+                "Pourcentage": f"{percentage:.1f}%"
+            })
+        
+        stats_df = pd.DataFrame(stats_data)
+        st.dataframe(stats_df, use_container_width=True, hide_index=True)
+
+def analyser_tendances_journalieres(df_filtered):
+    """Analyser les tendances journalières et cycles hebdomadaires"""
+    
+    st.subheader("🕐 Analyse des Tendances Journalières")
+    
+    if len(df_filtered) == 0:
+        st.warning("Aucune donnée pour l'analyse journalière.")
+        return
+    
+    # 1. Distribution par heure
+    st.markdown("#### ⏰ Distribution par heure")
+    
+    heure_counts = df_filtered.groupby('Heure').size()
+    
+    fig, ax = plt.subplots(figsize=(14, 6))
+    bars = ax.bar(heure_counts.index, heure_counts.values, color='darkblue', alpha=0.8)
+    
+    # Ajouter les valeurs sur les barres
+    for bar in bars:
+        height = bar.get_height()
+        if height > 0:
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                   f'{int(height)}', ha='center', va='bottom', fontsize=9)
+    
+    ax.set_title('Nombre de séismes par heure de la journée')
+    ax.set_xlabel('Heure')
+    ax.set_ylabel('Nombre de séismes')
+    ax.set_xticks(range(0, 24, 2))
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
     # 2. Analyse par périodes de la journée
     st.markdown("#### 🌅 Analyse par périodes")
     
@@ -830,6 +984,23 @@ def analyser_tendances_long_terme(df_filtered):
     
     st.dataframe(df_annuel, use_container_width=True)
 
+def calculate_autocorr(series, max_lags=50):
+    """Calculer l'autocorrélation manuellement"""
+    n = len(series)
+    series = np.array(series)
+    mean = np.mean(series)
+    c0 = np.dot(series - mean, series - mean) / float(n)
+    
+    acf = np.ones(max_lags + 1)
+    for k in range(1, max_lags + 1):
+        if k < n:
+            c_k = np.dot(series[:-k] - mean, series[k:] - mean) / float(n)
+            acf[k] = c_k / c0
+        else:
+            acf[k] = 0
+    
+    return acf
+
 def analyser_cycles_periodicites(df_filtered):
     """Analyser les cycles et périodicités dans les données"""
     
@@ -847,15 +1018,23 @@ def analyser_cycles_periodicites(df_filtered):
     # 1. Autocorrélation
     st.markdown("#### 📊 Analyse d'autocorrélation")
     
-    fig, ax = plt.subplots(figsize=(15, 6))
+    # Calculer l'autocorrélation manuellement
+    max_lags = min(100, len(ts_daily) - 1)
+    autocorr = calculate_autocorr(ts_daily.values, max_lags)
     
-    # Calculer l'autocorrélation manuellement pour plus de contrôle
-    from pandas.plotting import autocorr_plot
-    autocorr_plot(ts_daily, ax=ax)
-    ax.set_xlim(0, min(100, len(ts_daily)))
+    fig, ax = plt.subplots(figsize=(15, 6))
+    lags = np.arange(len(autocorr))
+    ax.plot(lags, autocorr, 'b-', linewidth=2)
+    ax.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+    ax.axhline(y=0.05, color='red', linestyle='--', alpha=0.5, label='Seuil +/-0.05')
+    ax.axhline(y=-0.05, color='red', linestyle='--', alpha=0.5)
+    ax.set_xlim(0, max_lags)
     ax.set_title('Autocorrélation du nombre de séismes par jour')
+    ax.set_xlabel('Délai (jours)')
+    ax.set_ylabel('Autocorrélation')
     ax.grid(True, alpha=0.3)
     ax.set_facecolor('#f8f9fa')
+    ax.legend()
     
     plt.tight_layout()
     st.pyplot(fig)
@@ -920,158 +1099,5 @@ def main():
     show_analyse_tendances()
 
 if __name__ == "__main__":
-    main().tight_layout()
-    st.pyplot(fig)
-    plt.close()
-    
-    # Test statistique Chi²
-    if len(mois_counts) >= 6:  # Au moins 6 mois pour un test valide
-        observed_values = [mois_dict[i] for i in range(1, 13)]
-        chi2, p = stats.chisquare(observed_values)
-        
-        st.markdown(f"""
-        <div class="statistical-result">
-            <h4>🧮 Test Chi² d'uniformité</h4>
-            <p><strong>Chi² =</strong> {chi2:.2f}</p>
-            <p><strong>p-value =</strong> {p:.4f}</p>
-            <p><strong>Interprétation :</strong> {'Il existe une variation saisonnière statistiquement significative' if p < 0.05 else 'La distribution mensuelle semble uniforme (pas de tendance saisonnière significative)'}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # 2. Heatmap par mois et année
-    if len(df_filtered['Annee'].unique()) > 1:
-        st.markdown("#### 🔥 Heatmap mensuelle par année")
-        
-        try:
-            heatmap_data = df_filtered.groupby(['Annee', 'Mois']).size().unstack(fill_value=0)
-            
-            # S'assurer que toutes les colonnes existent
-            for m in range(1, 13):
-                if m not in heatmap_data.columns:
-                    heatmap_data[m] = 0
-            
-            heatmap_data = heatmap_data.reindex(sorted(heatmap_data.columns), axis=1)
-            
-            # Colormap personnalisée
-            colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", 
-                     "#4292c6", "#2171b5", "#08519c", "#08306b"]
-            cmap = LinearSegmentedColormap.from_list("custom_blues", colors)
-            
-            fig, ax = plt.subplots(figsize=(14, 8))
-            sns.heatmap(heatmap_data, cmap=cmap, annot=True, fmt="d", linewidths=.5, ax=ax)
-            ax.set_title('Nombre de séismes par mois et par année')
-            ax.set_xlabel('Mois')
-            ax.set_ylabel('Année')
-            ax.set_xticklabels([mois_noms[i-1] for i in heatmap_data.columns], rotation=45)
-            
-            plt.tight_layout()
-            st.pyplot(fig)
-            plt.close()
-            
-        except Exception as e:
-            st.warning(f"Impossible de créer la heatmap: {e}")
-    
-    # 3. Magnitude moyenne par mois
-    st.markdown("#### ⚡ Magnitude moyenne par mois")
-    
-    mag_means = df_filtered.groupby('Mois')['Magnitude'].mean()
-    
-    fig, ax = plt.subplots(figsize=(14, 6))
-    mois_avec_donnees = sorted(mag_means.index)
-    bars = ax.bar(mois_avec_donnees, mag_means.values, color='orange', alpha=0.8)
-    
-    # Ajouter les valeurs sur les barres
-    for bar in bars:
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2., height,
-               f'{height:.2f}', ha='center', va='bottom', fontsize=10)
-    
-    ax.set_title('Magnitude moyenne des séismes par mois')
-    ax.set_xlabel('Mois')
-    ax.set_ylabel('Magnitude moyenne')
-    ax.set_xticks(mois_avec_donnees)
-    ax.set_xticklabels([mois_noms[int(i)-1] for i in mois_avec_donnees], rotation=45)
-    ax.grid(alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close()
-    
-    # 4. Analyse par saison
-    st.markdown("#### 🍂 Analyse saisonnière")
-    
-    season_counts = df_filtered.groupby('Saison').size()
-    season_order = ['Hiver', 'Printemps', 'Été', 'Automne']
-    season_counts = season_counts.reindex([s for s in season_order if s in season_counts.index])
-    
-    fig, ax = plt.subplots(figsize=(12, 6))
-    bars = ax.bar(season_counts.index, season_counts.values, 
-                  color=['lightblue', 'lightgreen', 'orange', 'brown'], alpha=0.8)
-    
-    # Ajouter les valeurs et pourcentages
-    for bar in bars:
-        height = bar.get_height()
-        percentage = height / len(df_filtered) * 100
-        ax.text(bar.get_x() + bar.get_width()/2., height,
-               f'{int(height)}\n({percentage:.1f}%)', 
-               ha='center', va='bottom', fontsize=11, fontweight='bold')
-    
-    ax.set_title('Nombre de séismes par saison')
-    ax.set_xlabel('Saison')
-    ax.set_ylabel('Nombre de séismes')
-    ax.grid(alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close()
-    
-    # Statistiques par saison
-    if len(season_counts) > 0:
-        st.markdown("#### 📋 Statistiques saisonnières")
-        
-        stats_data = []
-        for saison, count in season_counts.items():
-            percentage = count / len(df_filtered) * 100
-            stats_data.append({
-                "Saison": saison,
-                "Nombre de séismes": count,
-                "Pourcentage": f"{percentage:.1f}%"
-            })
-        
-        stats_df = pd.DataFrame(stats_data)
-        st.dataframe(stats_df, use_container_width=True, hide_index=True)
-
-def analyser_tendances_journalieres(df_filtered):
-    """Analyser les tendances journalières et cycles hebdomadaires"""
-    
-    st.subheader("🕐 Analyse des Tendances Journalières")
-    
-    if len(df_filtered) == 0:
-        st.warning("Aucune donnée pour l'analyse journalière.")
-        return
-    
-    # 1. Distribution par heure
-    st.markdown("#### ⏰ Distribution par heure")
-    
-    heure_counts = df_filtered.groupby('Heure').size()
-    
-    fig, ax = plt.subplots(figsize=(14, 6))
-    bars = ax.bar(heure_counts.index, heure_counts.values, color='darkblue', alpha=0.8)
-    
-    # Ajouter les valeurs sur les barres
-    for bar in bars:
-        height = bar.get_height()
-        if height > 0:
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{int(height)}', ha='center', va='bottom', fontsize=9)
-    
-    ax.set_title('Nombre de séismes par heure de la journée')
-    ax.set_xlabel('Heure')
-    ax.set_ylabel('Nombre de séismes')
-    ax.set_xticks(range(0, 24, 2))
-    ax.grid(alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt
+    main()
+        '
