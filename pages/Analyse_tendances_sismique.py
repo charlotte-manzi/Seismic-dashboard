@@ -38,9 +38,14 @@ def apply_custom_css():
     """Appliquer le CSS personnalisé pour les tendances"""
     st.markdown("""
     <style>
-    /* Main dashboard background */
+    /* Fix main background gradient */
+    .stApp > div:first-child {
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+        min-height: 100vh;
+    }
+    
     .main > div {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
         min-height: 100vh;
     }
     
@@ -53,33 +58,59 @@ def apply_custom_css():
 
     /* Card-style containers for each section */
     .dashboard-card {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin: 20px 0;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-        border: 1px solid rgba(255,255,255,0.2);
+        background: white !important;
+        border-radius: 15px !important;
+        padding: 25px !important;
+        margin: 20px 0 !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
         backdrop-filter: blur(10px);
     }
 
     /* Filter section as a distinct card */
     .filter-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin: 20px 0;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border-radius: 15px !important;
+        padding: 25px !important;
+        margin: 20px 0 !important;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+    }
+
+    /* Fix text visibility in filter card */
+    .filter-card .filter-label {
+        color: white !important;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .filter-card .stMarkdown, 
+    .filter-card .stMarkdown p {
+        color: white !important;
+    }
+
+    .filter-card .stCaption {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
+
+    .filter-card * {
+        color: white !important;
+    }
+
+    .filter-card .stSelectbox label,
+    .filter-card .stMultiSelect label {
+        color: white !important;
     }
 
     /* Chart containers */
     .chart-container {
-        background: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin: 20px 0;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-        border-left: 5px solid #3498db;
+        background: white !important;
+        border-radius: 15px !important;
+        padding: 25px !important;
+        margin: 20px 0 !important;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.1) !important;
+        border-left: 5px solid #3498db !important;
     }
 
     /* Metrics cards */
@@ -103,7 +134,7 @@ def apply_custom_css():
     }
     
     .intro-text {
-        color: #155724;
+        color: #155724 !important;
         font-size: 16px;
         line-height: 1.6;
         margin: 0;
@@ -122,13 +153,13 @@ def apply_custom_css():
     }
     
     .statistical-result h4 {
-        color: #155724;
+        color: #155724 !important;
         margin-bottom: 15px;
         font-weight: bold;
     }
     
     .statistical-result p {
-        color: #155724;
+        color: #155724 !important;
         margin: 8px 0;
         font-weight: 500;
     }
@@ -142,9 +173,21 @@ def apply_custom_css():
         box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     
+    .trend-metric h4 {
+        color: #1565c0 !important;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+    
+    .trend-metric p {
+        color: #1565c0 !important;
+        margin: 8px 0;
+        font-weight: 500;
+    }
+    
     .filter-label {
         font-weight: 600;
-        color: white;
+        color: white !important;
         margin-bottom: 8px;
         font-size: 14px;
     }
@@ -182,35 +225,53 @@ def apply_custom_css():
     
     /* Button styling */
     .stButton > button {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 12px 24px;
-        font-weight: 600;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+        transition: all 0.3s ease !important;
     }
     
     .stButton > button:hover {
-        background: linear-gradient(135deg, #218838 0%, #1e7e8c 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        background: linear-gradient(135deg, #218838 0%, #1e7e8c 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.25) !important;
     }
     
     /* Metrics styling */
     .stMetric {
-        background: white;
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        text-align: center;
+        background: white !important;
+        padding: 15px !important;
+        border-radius: 10px !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+        text-align: center !important;
     }
     
     /* Section headers */
     h1, h2, h3, h4 {
-        color: #2c3e50;
-        font-weight: 700;
+        color: #2c3e50 !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Chart container headers */
+    .chart-container h1, 
+    .chart-container h2, 
+    .chart-container h3, 
+    .chart-container h4 {
+        color: #2c3e50 !important;
+        font-weight: 700 !important;
+    }
+    
+    /* Dashboard card headers */
+    .dashboard-card h1, 
+    .dashboard-card h2, 
+    .dashboard-card h3, 
+    .dashboard-card h4 {
+        color: #2c3e50 !important;
+        font-weight: 700 !important;
     }
     
     /* Tabs styling */
