@@ -88,17 +88,9 @@ def apply_custom_css():
     }
 
 
-    /* Complete slider styling */
-    .stSlider .stSlider > div > div > div {
-    background-color: #8e44ad !important;
-    }
-
-    .stSlider .stSlider > div > div > div > div {
-    background-color: #8e44ad !important;
-    }
-
-    .stSlider [data-baseweb="slider"] {
-    background-color: #8e44ad !important;
+    /* Match the green from your intro-section border */
+    .stSlider > div > div > div > div {
+    background-color: #2ecc71 !important;
     }
 
     
