@@ -146,6 +146,46 @@ def apply_custom_css():
     </style>
     """, unsafe_allow_html=True)
 
+def clean_dataframe_for_display(df):
+    """Nettoyer un DataFrame pour l'affichage Streamlit (éviter les erreurs PyArrow)"""
+    df_clean = df.copy()
+    
+    # CORRECTION DRASTIQUE : Identifier et corriger TOUTES les colonnes problématiques
+    problematic_columns = []
+    
+    for col in df_clean.columns:
+        if df_clean[col].dtype == 'object':
+            problematic_columns.append(col)
+            
+            # Stratégie en cascade pour nettoyer
+            try:
+                # 1. Essayer conversion numérique directe
+                df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
+                
+                # 2. Si trop de NaN, c'était probablement du texte
+                if df_clean[col].isna().sum() > len(df_clean) * 0.8:
+                    # Revenir au texte original et forcer string
+                    df_clean[col] = df[col].astype(str).replace({
+                        'nan': 'N/A', 'None': 'N/A', '<NA>': 'N/A', 'NaT': 'N/A'
+                    })
+                    df_clean[col] = df_clean[col].astype('string')
+                else:
+                    # Garder comme numérique
+                    df_clean[col] = df_clean[col].astype('float64')
+                    
+            except Exception as e:
+                # En dernier recours : forcer string proprement
+                df_clean[col] = df[col].astype(str).replace({
+                    'nan': 'N/A', 'None': 'N/A', '<NA>': 'N/A', 'NaT': 'N/A'
+                })
+                df_clean[col] = df_clean[col].astype('string')
+    
+    # Diagnostic pour debug (optionnel, peut être retiré)
+    if problematic_columns and len(problematic_columns) <= 3:
+        st.info(f"🔧 Colonnes nettoyées pour l'affichage: {', '.join(problematic_columns)}")
+    
+    return df_clean
+
 def show_analyse_caracteristiques():
     """Fonction principale pour afficher l'analyse des caractéristiques"""
     
