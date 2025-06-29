@@ -160,15 +160,7 @@ def show_analyse_tendances():
     # Appliquer le style personnalisé
     apply_custom_css()
     
-    # En-tête
-    st.markdown("""
-    <div class="trends-header">
-        <h1>📈 Analyse des Tendances Sismiques</h1>
-        <p>Analyse statistique avancée des patterns temporels</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Section d'introduction
+    # Section d'introduction (sans header redondant)
     st.markdown("""
     <div class="intro-section">
         <p class="intro-text" style="text-align: center; font-weight: bold; line-height: 1.8;">
