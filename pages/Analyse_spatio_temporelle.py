@@ -88,8 +88,17 @@ def apply_custom_css():
     }
 
 
-    .stSlider > div > div > div > div {
-    background-color: #3498db !important;
+    /* Complete slider styling */
+    .stSlider .stSlider > div > div > div {
+    background-color: #8e44ad !important;
+    }
+
+    .stSlider .stSlider > div > div > div > div {
+    background-color: #8e44ad !important;
+    }
+
+    .stSlider [data-baseweb="slider"] {
+    background-color: #8e44ad !important;
     }
 
     
