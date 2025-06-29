@@ -969,96 +969,19 @@ def analyser_potentiel_destructeur(df_filtered):
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Tableau des séismes les plus dangereux
-                if 'Date' in seismes_dangereux.columns:
-                    top_dangerous = seismes_dangereux.nlargest(10, 'Potentiel_Destructeur')[
-                        ['Date', 'Magnitude', 'Profondeur', 'Potentiel_Destructeur']
-                    ].copy()
-                    
-                    # Conversion sécurisée des dates avec diagnostic
-                    try:
-                        # Diagnostic des dates avant conversion
-                        date_sample = top_dangerous['Date'].head(5).tolist()
-                        st.write(f"🔍 Échantillon des dates brutes: {date_sample}")
-                        
-                        # Créer une copie pour éviter les modifications sur l'original
-                        date_column = top_dangerous['Date'].copy()
-                        
-                        # Compter les valeurs manquantes
-                        missing_dates = date_column.isna().sum()
-                        if missing_dates > 0:
-                            st.warning(f"⚠️ {missing_dates} dates manquantes détectées sur {len(date_column)}")
-                        
-                        # Essayer différents formats de date
-                        date_converted = None
-                        formats_tried = []
-                        
-                        # Format 1: dd/mm/yy HH:MM
-                        try:
-                            date_converted = pd.to_datetime(date_column, format='%d/%m/%y %H:%M', errors='coerce')
-                            formats_tried.append('%d/%m/%y %H:%M')
-                            if date_converted.notna().sum() > 0:
-                                st.info(f"✅ Format détecté: {formats_tried[-1]} ({date_converted.notna().sum()} dates converties)")
-                        except:
-                            pass
-                        
-                        # Format 2: dd/mm/yyyy HH:MM
-                        if date_converted is None or date_converted.notna().sum() == 0:
-                            try:
-                                date_converted = pd.to_datetime(date_column, format='%d/%m/%Y %H:%M', errors='coerce')
-                                formats_tried.append('%d/%m/%Y %H:%M')
-                                if date_converted.notna().sum() > 0:
-                                    st.info(f"✅ Format détecté: {formats_tried[-1]} ({date_converted.notna().sum()} dates converties)")
-                            except:
-                                pass
-                        
-                        # Format 3: Inférence automatique
-                        if date_converted is None or date_converted.notna().sum() == 0:
-                            try:
-                                date_converted = pd.to_datetime(date_column, errors='coerce')
-                                formats_tried.append('Inférence automatique')
-                                if date_converted.notna().sum() > 0:
-                                    st.info(f"✅ Format détecté: {formats_tried[-1]} ({date_converted.notna().sum()} dates converties)")
-                            except:
-                                pass
-                        
-                        # Appliquer le résultat
-                        if date_converted is not None and date_converted.notna().any():
-                            # Formater seulement les dates valides
-                            top_dangerous['Date'] = date_converted.dt.strftime('%d/%m/%Y %H:%M').fillna('Date inconnue')
-                            successful_conversions = date_converted.notna().sum()
-                            st.success(f"✅ {successful_conversions} dates formatées avec succès")
-                        else:
-                            # Aucune conversion réussie
-                            top_dangerous['Date'] = top_dangerous['Date'].fillna('Date inconnue')
-                            st.error("❌ Aucun format de date reconnu. Vérifiez vos données sources.")
-                    
-                    except Exception as e:
-                        # En cas d'erreur, remplacer les valeurs manquantes
-                        top_dangerous['Date'] = top_dangerous['Date'].fillna('Date inconnue')
-                        st.error(f"❌ Erreur lors de la conversion des dates: {str(e)}")
-                    
-                    # Arrondir les valeurs numériques pour un meilleur affichage
-                    top_dangerous['Magnitude'] = top_dangerous['Magnitude'].round(2)
-                    top_dangerous['Profondeur'] = top_dangerous['Profondeur'].round(2)
-                    top_dangerous['Potentiel_Destructeur'] = top_dangerous['Potentiel_Destructeur'].round(2)
-                    
-                    top_dangerous.columns = ['Date', 'Magnitude', 'Profondeur (km)', 'Potentiel']
-                    
-                    # Afficher un message de debug pour vérifier les données
-                    st.info(f"ℹ️ Affichage des {len(top_dangerous)} séismes les plus dangereux")
-                    
-                    # CORRECTION PyArrow : Nettoyer le DataFrame avant affichage
-                    top_dangerous_clean = clean_dataframe_for_display(top_dangerous)
-                    
-                    st.dataframe(top_dangerous_clean, hide_index=True, use_container_width=True)
-                else:
-                    # Si pas de colonne Date, afficher sans
-                    top_dangerous = seismes_dangereux.nlargest(10, 'Potentiel_Destructeur')[
-                        ['Magnitude', 'Profondeur', 'Potentiel_Destructeur']
-                    ].copy()
-                    top_dangerous.columns = ['Magnitude', 'Profondeur (km)', 'Potentiel']
-                    st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
+                # Afficher des statistiques sur les séismes dangereux sans le tableau détaillé
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    magnitude_max = seismes_dangereux['Magnitude'].max()
+                    st.metric("🔥 Magnitude maximale", f"{magnitude_max:.2f}")
+                
+                with col2:
+                    potentiel_max = seismes_dangereux['Potentiel_Destructeur'].max()
+                    st.metric("⚡ Potentiel max", f"{potentiel_max:.1f}")
+                
+                with col3:
+                    profondeur_min = seismes_dangereux['Profondeur'].min()
+                    st.metric("📏 Prof. minimale", f"{profondeur_min:.1f} km")
             else:
                 st.info("ℹ️ Aucun séisme avec un potentiel destructeur particulièrement élevé détecté.")
         else:
