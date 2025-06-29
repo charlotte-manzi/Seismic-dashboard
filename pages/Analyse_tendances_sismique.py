@@ -134,7 +134,6 @@ def apply_custom_css():
         margin-bottom: 5px !important;
     }
     
-    /* Masquer les labels par défaut */
     .stSlider > label {
         display: none !important;
     }
@@ -164,7 +163,7 @@ def show_analyse_tendances():
     # Appliquer le style personnalisé
     apply_custom_css()
     
-    # Section d'introduction (sans header redondant)
+    # Section d'introduction
     st.markdown("""
     <div class="intro-section">
         <p class="intro-text" style="text-align: center; font-weight: bold; line-height: 1.8;">
@@ -217,7 +216,7 @@ def show_analyse_tendances():
         analyser_cycles_periodicites(df_filtered)
 
 def show_trends_filters(df):
-    """Afficher les filtres spécifiques à l'analyse des tendances (sans filtres avancés)"""
+    """Afficher les filtres spécifiques à l'analyse des tendances"""
     
     with st.container():
         
@@ -335,7 +334,7 @@ def show_trends_filters(df):
                 type="primary"
             )
     
-    # Appliquer les filtres (version simplifiée sans filtres avancés)
+    # Appliquer les filtres
     df_filtered = apply_trends_filters_simple(
         df, annees_range, selected_mois, magnitude_range, profondeur_range, selected_saisons
     )
@@ -365,7 +364,7 @@ def show_trends_filters(df):
     return df_filtered
 
 def apply_trends_filters_simple(df, annees_range, selected_mois, magnitude_range, profondeur_range, selected_saisons):
-    """Appliquer les filtres de base des tendances (sans filtres avancés)"""
+    """Appliquer les filtres de base des tendances"""
     
     df_filtered = df.copy()
     
@@ -510,7 +509,7 @@ def analyser_tendances_saisonnieres(df_filtered):
     mois_noms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
                  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
     
-    # 1. Nombre de séismes par mois (tous les ans confondus)
+    # 1. Nombre de séismes par mois
     st.markdown("#### 📊 Distribution mensuelle")
     
     mois_counts = df_filtered.groupby('Mois').size()
@@ -544,7 +543,7 @@ def analyser_tendances_saisonnieres(df_filtered):
     plt.close()
     
     # Test statistique Chi²
-    if len(mois_counts) >= 6:  # Au moins 6 mois pour un test valide
+    if len(mois_counts) >= 6:
         observed_values = [mois_dict[i] for i in range(1, 13)]
         chi2, p = stats.chisquare(observed_values)
         
