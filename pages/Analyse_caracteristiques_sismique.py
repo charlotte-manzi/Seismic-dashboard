@@ -160,7 +160,18 @@ def show_analyse_caracteristiques():
     </div>
     """, unsafe_allow_html=True)
     
-    # Section d'introduction
+    # Obtenir les données filtrées depuis l'état de session AVANT l'intro
+    if 'filtered_df' not in st.session_state:
+        st.error("❌ Données non disponibles. Veuillez retourner à la page d'accueil.")
+        return
+    
+    df = st.session_state.filtered_df
+    
+    if len(df) == 0:
+        st.warning("⚠️ Aucune donnée ne correspond aux filtres sélectionnés.")
+        return
+    
+    # Section d'introduction avec le bon nombre de séismes
     st.markdown(f"""
     <div class="intro-section">
         <p style="text-align: center; font-weight: bold; line-height: 1.8; color: #155724; font-size: 16px; margin: 0;">
@@ -172,17 +183,6 @@ def show_analyse_caracteristiques():
         </p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Obtenir les données filtrées depuis l'état de session
-    if 'filtered_df' not in st.session_state:
-        st.error("❌ Données non disponibles. Veuillez retourner à la page d'accueil.")
-        return
-    
-    df = st.session_state.filtered_df
-    
-    if len(df) == 0:
-        st.warning("⚠️ Aucune donnée ne correspond aux filtres sélectionnés.")
-        return
     
     # Préparer les données avec les caractéristiques calculées
     df = prepare_seismic_characteristics(df)
