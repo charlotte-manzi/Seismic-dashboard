@@ -86,6 +86,12 @@ def apply_custom_css():
     .element-container {
         margin-bottom: 0px !important;
     }
+
+
+    .stSlider > div > div > div > div {
+    background-color: #3498db !important;
+    }
+
     
     /* Réduire la taille des sliders */
     .stSlider > div {
