@@ -642,7 +642,9 @@ def analyser_distribution_magnitudes(df_filtered):
                 "Pourcentage": f"{percentage:.1f}%"
             })
         
-        st.dataframe(pd.DataFrame(category_data), hide_index=True)
+        category_df = pd.DataFrame(category_data)
+        category_df = clean_dataframe_for_display(category_df)
+        st.dataframe(category_df, hide_index=True)
 
 def analyser_distribution_profondeurs(df_filtered):
     """Analyser la distribution des profondeurs"""
@@ -960,14 +962,12 @@ def analyser_potentiel_destructeur(df_filtered):
             
             if len(seismes_dangereux) > 0:
                 pourcentage_dangereux = len(seismes_dangereux)/len(df_clean)*100
-                st.markdown(f"""
-                <div class="danger-alert">
-                    <h4>⚠️ Séismes à surveiller</h4>
-                    <p><strong>{len(seismes_dangereux)} séismes</strong> ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})</p>
-                    <p>Ces séismes représentent <strong>{pourcentage_dangereux:.1f}%</strong> des {len(df_clean)} séismes analysés</p>
-                    <p><em>Note: Ce sont les 10% les plus dangereux par définition (quantile 90%)</em></p>
-                </div>
-                """, unsafe_allow_html=True)
+                
+                # Utiliser les composants Streamlit natifs au lieu du HTML
+                st.warning("⚠️ **Séismes à surveiller**")
+                st.write(f"**{len(seismes_dangereux)} séismes** ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})")
+                st.write(f"Ces séismes représentent **{pourcentage_dangereux:.1f}%** des **{len(df_clean)}** séismes analysés")
+                st.info("*Note: Ce sont les 10% les plus dangereux par définition (quantile 90%)*")
                 
                 # Afficher des statistiques sur les séismes dangereux sans le tableau détaillé
                 col1, col2, col3 = st.columns(3)
@@ -1039,11 +1039,7 @@ def analyser_potentiel_destructeur(df_filtered):
                 
                 # Forcer les types pour éviter les erreurs PyArrow
                 category_df = pd.DataFrame(category_data)
-                category_df = category_df.astype({
-                    'Catégorie': 'string',
-                    'Nombre': 'string', 
-                    'Pourcentage': 'string'
-                })
+                category_df = clean_dataframe_for_display(category_df)
                 st.dataframe(category_df, hide_index=True)
     
     except Exception as e:
@@ -1264,7 +1260,9 @@ def analyser_energie(df_filtered):
                 f"{df_filtered['Energie'].median():.2e} J"
             ]
         }
-        st.dataframe(pd.DataFrame(energy_stats), hide_index=True)
+        energy_stats_df = pd.DataFrame(energy_stats)
+        energy_stats_df = clean_dataframe_for_display(energy_stats_df)
+        st.dataframe(energy_stats_df, hide_index=True)
     
     with col2:
         st.markdown("""
@@ -1288,7 +1286,9 @@ def analyser_energie(df_filtered):
                 })
         
         if energy_contribution:
-            st.dataframe(pd.DataFrame(energy_contribution), hide_index=True)
+            energy_df = pd.DataFrame(energy_contribution)
+            energy_df = clean_dataframe_for_display(energy_df)
+            st.dataframe(energy_df, hide_index=True)
 
 # Fonction principale qui peut être appelée depuis app.py
 def main():
