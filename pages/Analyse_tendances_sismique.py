@@ -38,163 +38,88 @@ def apply_custom_css():
     """Appliquer le CSS personnalisé pour les tendances"""
     st.markdown("""
     <style>
-    /* Fix main background gradient - more targeted */
-    .stApp {
-        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
-    }
-    
-    .main .block-container {
-        background: transparent !important;
-        padding-top: 1rem !important;
-    }
-    
-    /* Dashboard container styling */
-    .main-dashboard {
-        background: transparent;
-        min-height: 100vh;
-        padding: 20px;
-    }
-
-    /* Card-style containers for each section */
-    .dashboard-card {
-        background: white !important;
-        border-radius: 15px !important;
-        padding: 25px !important;
-        margin: 20px 0 !important;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        backdrop-filter: blur(10px);
-    }
-
-    /* Filter section as a distinct card */
-    .filter-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white !important;
-        border-radius: 15px !important;
-        padding: 25px !important;
-        margin: 20px 0 !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
-    }
-
-    /* Fix text visibility in filter card */
-    .filter-card .filter-label {
-        color: white !important;
-        font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 14px;
-    }
-
-    .filter-card .stMarkdown, 
-    .filter-card .stMarkdown p {
-        color: white !important;
-    }
-
-    .filter-card .stCaption {
-        color: rgba(255, 255, 255, 0.8) !important;
-    }
-
-    .filter-card * {
-        color: white !important;
-    }
-
-    .filter-card .stSelectbox label,
-    .filter-card .stMultiSelect label {
-        color: white !important;
-    }
-
-    /* Chart containers */
-    .chart-container {
-        background: white !important;
-        border-radius: 15px !important;
-        padding: 25px !important;
-        margin: 20px 0 !important;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.1) !important;
-        border-left: 5px solid #3498db !important;
-    }
-
-    /* Metrics cards */
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .trends-header {
+        background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%);
         color: white;
-        padding: 20px;
-        border-radius: 12px;
+        padding: 1.5rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
         text-align: center;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.15);
-        margin: 10px 0;
     }
     
     .intro-section {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        padding: 25px;
+        background-color: #d4edda;
+        padding: 20px;
         border-radius: 15px;
-        margin: 20px 0;
-        border-left: 5px solid #28a745;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        margin: 15px 0;
+        border-left: 4px solid #28a745;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     
     .intro-text {
-        color: #155724 !important;
+        color: #155724;
         font-size: 16px;
         line-height: 1.6;
         margin: 0;
         text-align: center;
     }
     
+    .analysis-container {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        border-left: 4px solid #8e44ad;
+    }
+    
     .statistical-result {
-        background: linear-gradient(135deg, #e8f5e8 0%, #d1ecf1 100%);
-        padding: 20px;
-        border-radius: 12px;
-        margin: 15px 0;
-        border-left: 5px solid #2ecc71;
+        background-color: #e8f5e8;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        border-left: 4px solid #2ecc71;
         color: #155724;
         font-weight: 500;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
     
     .statistical-result h4 {
-        color: #155724 !important;
-        margin-bottom: 15px;
+        color: #155724;
+        margin-bottom: 10px;
         font-weight: bold;
     }
     
     .statistical-result p {
-        color: #155724 !important;
-        margin: 8px 0;
+        color: #155724;
+        margin: 5px 0;
         font-weight: 500;
+    }
+    
+    .warning-result {
+        background-color: #fff3cd;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        border-left: 4px solid #ffc107;
     }
     
     .trend-metric {
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        padding: 20px;
-        border-radius: 12px;
-        margin: 15px 0;
-        border-left: 5px solid #2196f3;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    }
-    
-    .trend-metric h4 {
-        color: #1565c0 !important;
-        margin-bottom: 15px;
-        font-weight: bold;
-    }
-    
-    .trend-metric p {
-        color: #1565c0 !important;
-        margin: 8px 0;
-        font-weight: 500;
+        background-color: #e3f2fd;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        border-left: 4px solid #2196f3;
     }
     
     .filter-label {
         font-weight: 600;
-        color: white !important;
-        margin-bottom: 8px;
-        font-size: 14px;
+        color: #495057;
+        margin-bottom: 5px;
+        font-size: 13px;
     }
     
-    /* Slider styling */
     .stSlider > div {
         padding-top: 0px !important;
-        padding-bottom: 8px !important;
+        padding-bottom: 5px !important;
     }
     
     .stSlider > div > div > div > div {
@@ -202,11 +127,11 @@ def apply_custom_css():
     }
     
     .stMultiSelect {
-        margin-bottom: 8px !important;
+        margin-bottom: 5px !important;
     }
     
     .stSelectbox {
-        margin-bottom: 8px !important;
+        margin-bottom: 5px !important;
     }
     
     /* Masquer les labels par défaut */
@@ -222,77 +147,13 @@ def apply_custom_css():
         display: none !important;
     }
     
-    /* Button styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 12px 24px !important;
-        font-weight: 600 !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .stButton > button:hover {
-        background: linear-gradient(135deg, #218838 0%, #1e7e8c 100%) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(0,0,0,0.25) !important;
-    }
-    
-    /* Metrics styling */
-    .stMetric {
-        background: white !important;
-        padding: 15px !important;
-        border-radius: 10px !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-        text-align: center !important;
-    }
-    
-    /* Section headers */
-    h1, h2, h3, h4 {
-        color: #2c3e50 !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Chart container headers */
-    .chart-container h1, 
-    .chart-container h2, 
-    .chart-container h3, 
-    .chart-container h4 {
-        color: #2c3e50 !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Dashboard card headers */
-    .dashboard-card h1, 
-    .dashboard-card h2, 
-    .dashboard-card h3, 
-    .dashboard-card h4 {
-        color: #2c3e50 !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Tabs styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: white;
-        border-radius: 12px;
-        padding: 8px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        height: 50px;
-        background-color: transparent;
-        border-radius: 8px;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white !important;
+    .filter-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 20px;
+        border-radius: 15px;
+        margin: 15px 0;
+        border-left: 4px solid #8e44ad;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -303,17 +164,15 @@ def show_analyse_tendances():
     # Appliquer le style personnalisé
     apply_custom_css()
     
-    # Section d'introduction avec style dashboard
+    # Section d'introduction (sans header redondant)
     st.markdown("""
-    <div class="dashboard-card">
-        <div class="intro-section">
-            <p class="intro-text" style="text-align: center; font-weight: bold; line-height: 1.8;">
-                ✅ <strong>15407 séismes réels chargés</strong><br><br>
-                Ce tableau de bord permet d'analyser les <strong>tendances temporelles</strong> de l'activité sismique. 
-                Vous pouvez explorer les <strong>patterns saisonniers</strong>, <strong>journaliers</strong>, les <strong>cycles hebdomadaires</strong> et les <strong>tendances à long terme</strong>. 
-                📊 Utilisez les filtres ci-dessous pour personnaliser votre analyse selon vos besoins spécifiques.
-            </p>
-        </div>
+    <div class="intro-section">
+        <p class="intro-text" style="text-align: center; font-weight: bold; line-height: 1.8;">
+            ✅ <strong>15407 séismes réels chargés</strong><br><br>
+            Ce tableau de bord permet d'analyser les <strong>tendances temporelles</strong> de l'activité sismique. 
+            Vous pouvez explorer les <strong>patterns saisonniers</strong>, <strong>journaliers</strong>, les <strong>cycles hebdomadaires</strong> et les <strong>tendances à long terme</strong>. 
+            📊 Utilisez les filtres ci-dessous pour personnaliser votre analyse selon vos besoins spécifiques.
+        </p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -328,7 +187,7 @@ def show_analyse_tendances():
         st.warning("⚠️ Aucune donnée ne correspond aux filtres sélectionnés.")
         return
     
-    # Section des filtres avec style dashboard
+    # Section des filtres
     df_filtered = show_trends_filters(df_original)
     
     if df_filtered is None or len(df_filtered) == 0:
@@ -359,8 +218,6 @@ def show_analyse_tendances():
 
 def show_trends_filters(df):
     """Afficher les filtres spécifiques à l'analyse des tendances (sans filtres avancés)"""
-    
-    st.markdown('<div class="filter-card">', unsafe_allow_html=True)
     
     with st.container():
         
@@ -478,8 +335,6 @@ def show_trends_filters(df):
                 type="primary"
             )
     
-    st.markdown('</div>', unsafe_allow_html=True)
-    
     # Appliquer les filtres (version simplifiée sans filtres avancés)
     df_filtered = apply_trends_filters_simple(
         df, annees_range, selected_mois, magnitude_range, profondeur_range, selected_saisons
@@ -489,8 +344,7 @@ def show_trends_filters(df):
     st.session_state.trends_filtered_df = df_filtered
     st.session_state.selected_trends_analysis_type = analysis_type
     
-    # Afficher les résultats de manière compacte dans une carte dashboard
-    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
+    # Afficher les résultats de manière compacte
     if len(df_filtered) == 0:
         st.error("❌ Aucune donnée ne correspond aux filtres")
     else:
@@ -507,8 +361,6 @@ def show_trends_filters(df):
             if len(df_filtered) > 0:
                 date_range = (df_filtered['Date_dt'].max() - df_filtered['Date_dt'].min()).days
                 st.metric("📅 Période", f"{date_range} jours")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     return df_filtered
 
@@ -626,7 +478,6 @@ def prepare_temporal_components(df):
 def show_data_summary(df):
     """Afficher un résumé des données pour l'analyse des tendances"""
     
-    st.markdown('<div class="dashboard-card">', unsafe_allow_html=True)
     st.markdown("### 📋 Résumé des Données Analysées")
     
     col1, col2, col3, col4 = st.columns(4)
@@ -645,13 +496,10 @@ def show_data_summary(df):
     with col4:
         period_days = (df['Date'].max() - df['Date'].min()).days
         st.metric("⏱️ Période totale", f"{period_days} jours")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 def analyser_tendances_saisonnieres(df_filtered):
     """Analyser les tendances saisonnières avec tests statistiques"""
     
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("🌸 Analyse des Tendances Saisonnières")
     
     if len(df_filtered) == 0:
@@ -688,163 +536,6 @@ def analyser_tendances_saisonnieres(df_filtered):
     ax.set_ylabel('Nombre de séismes')
     ax.set_xticks(range(1, 13))
     ax.set_xticklabels(mois_noms, rotation=45)
-    ax.grid(alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close()
-    
-    # Test statistique Chi²
-    if len(mois_counts) >= 6:  # Au moins 6 mois pour un test valide
-        observed_values = [mois_dict[i] for i in range(1, 13)]
-        chi2, p = stats.chisquare(observed_values)
-        
-        st.markdown(f"""
-        <div class="statistical-result">
-            <h4>🧮 Test Chi² d'uniformité</h4>
-            <p><strong>Chi² =</strong> {chi2:.2f}</p>
-            <p><strong>p-value =</strong> {p:.4f}</p>
-            <p><strong>Interprétation :</strong> {'Il existe une variation saisonnière statistiquement significative' if p < 0.05 else 'La distribution mensuelle semble uniforme (pas de tendance saisonnière significative)'}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # 2. Heatmap par mois et année
-    if len(df_filtered['Annee'].unique()) > 1:
-        st.markdown("#### 🔥 Heatmap mensuelle par année")
-        
-        try:
-            heatmap_data = df_filtered.groupby(['Annee', 'Mois']).size().unstack(fill_value=0)
-            
-            # S'assurer que toutes les colonnes existent
-            for m in range(1, 13):
-                if m not in heatmap_data.columns:
-                    heatmap_data[m] = 0
-            
-            heatmap_data = heatmap_data.reindex(sorted(heatmap_data.columns), axis=1)
-            
-            # Colormap personnalisée
-            colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", 
-                     "#4292c6", "#2171b5", "#08519c", "#08306b"]
-            cmap = LinearSegmentedColormap.from_list("custom_blues", colors)
-            
-            fig, ax = plt.subplots(figsize=(14, 8))
-            sns.heatmap(heatmap_data, cmap=cmap, annot=True, fmt="d", linewidths=.5, ax=ax)
-            ax.set_title('Nombre de séismes par mois et par année')
-            ax.set_xlabel('Mois')
-            ax.set_ylabel('Année')
-            ax.set_xticklabels([mois_noms[i-1] for i in heatmap_data.columns], rotation=45)
-            
-            plt.tight_layout()
-            st.pyplot(fig)
-            plt.close()
-            
-        except Exception as e:
-            st.warning(f"Impossible de créer la heatmap: {e}")
-    
-    # 3. Magnitude moyenne par mois
-    st.markdown("#### ⚡ Magnitude moyenne par mois")
-    
-    mag_means = df_filtered.groupby('Mois')['Magnitude'].mean()
-    
-    fig, ax = plt.subplots(figsize=(14, 6))
-    mois_avec_donnees = sorted(mag_means.index)
-    bars = ax.bar(mois_avec_donnees, mag_means.values, color='orange', alpha=0.8)
-    
-    # Ajouter les valeurs sur les barres
-    for bar in bars:
-        height = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2., height,
-               f'{height:.2f}', ha='center', va='bottom', fontsize=10)
-    
-    ax.set_title('Magnitude moyenne des séismes par mois')
-    ax.set_xlabel('Mois')
-    ax.set_ylabel('Magnitude moyenne')
-    ax.set_xticks(mois_avec_donnees)
-    ax.set_xticklabels([mois_noms[int(i)-1] for i in mois_avec_donnees], rotation=45)
-    ax.grid(alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close()
-    
-    # 4. Analyse par saison
-    st.markdown("#### 🍂 Analyse saisonnière")
-    
-    season_counts = df_filtered.groupby('Saison').size()
-    season_order = ['Hiver', 'Printemps', 'Été', 'Automne']
-    season_counts = season_counts.reindex([s for s in season_order if s in season_counts.index])
-    
-    fig, ax = plt.subplots(figsize=(12, 6))
-    bars = ax.bar(season_counts.index, season_counts.values, 
-                  color=['lightblue', 'lightgreen', 'orange', 'brown'], alpha=0.8)
-    
-    # Ajouter les valeurs et pourcentages
-    for bar in bars:
-        height = bar.get_height()
-        percentage = height / len(df_filtered) * 100
-        ax.text(bar.get_x() + bar.get_width()/2., height,
-               f'{int(height)}\n({percentage:.1f}%)', 
-               ha='center', va='bottom', fontsize=11, fontweight='bold')
-    
-    ax.set_title('Nombre de séismes par saison')
-    ax.set_xlabel('Saison')
-    ax.set_ylabel('Nombre de séismes')
-    ax.grid(alpha=0.3)
-    ax.set_facecolor('#f8f9fa')
-    
-    plt.tight_layout()
-    st.pyplot(fig)
-    plt.close()
-    
-    # Statistiques par saison
-    if len(season_counts) > 0:
-        st.markdown("#### 📋 Statistiques saisonnières")
-        
-        stats_data = []
-        for saison, count in season_counts.items():
-            percentage = count / len(df_filtered) * 100
-            stats_data.append({
-                "Saison": saison,
-                "Nombre de séismes": count,
-                "Pourcentage": f"{percentage:.1f}%"
-            })
-        
-        stats_df = pd.DataFrame(stats_data)
-        st.dataframe(stats_df, use_container_width=True, hide_index=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-def analyser_tendances_journalieres(df_filtered):
-    """Analyser les tendances journalières et cycles hebdomadaires"""
-    
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
-    st.subheader("🕐 Analyse des Tendances Journalières")
-    
-    if len(df_filtered) == 0:
-        st.warning("Aucune donnée pour l'analyse journalière.")
-        return
-    
-    # 1. Distribution par heure
-    st.markdown("#### ⏰ Distribution par heure")
-    
-    heure_counts = df_filtered.groupby('Heure').size()
-    
-    fig, ax = plt.subplots(figsize=(14, 6))
-    bars = ax.bar(heure_counts.index, heure_counts.values, color='darkblue', alpha=0.8)
-    
-    # Ajouter les valeurs sur les barres
-    for bar in bars:
-        height = bar.get_height()
-        if height > 0:
-            ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{int(height)}', ha='center', va='bottom', fontsize=9)
-    
-    ax.set_title('Nombre de séismes par heure de la journée')
-    ax.set_xlabel('Heure')
-    ax.set_ylabel('Nombre de séismes')
-    ax.set_xticks(range(0, 24, 2))
     ax.grid(alpha=0.3)
     ax.set_facecolor('#f8f9fa')
     
@@ -969,19 +660,15 @@ def analyser_tendances_journalieres(df_filtered):
             <p><strong>Interprétation :</strong> {'Le weekend a proportionnellement plus de séismes' if ratio_observe > ratio_attendu else 'Distribution relativement uniforme'}</p>
         </div>
         """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 def analyser_tendances_long_terme(df_filtered):
     """Analyser les tendances à long terme avec régression"""
     
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("📊 Analyse des Tendances à Long Terme")
     
     annees_uniques = df_filtered['Annee'].unique()
     if len(annees_uniques) < 2:
         st.warning(f"Cette analyse nécessite au moins 2 années. Années disponibles : {', '.join(map(str, sorted(annees_uniques)))}")
-        st.markdown('</div>', unsafe_allow_html=True)
         return
     
     # Regrouper par mois pour l'analyse des séries temporelles
@@ -1142,18 +829,14 @@ def analyser_tendances_long_terme(df_filtered):
             df_annuel[col] = df_annuel[col].round(2)
     
     st.dataframe(df_annuel, use_container_width=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 def analyser_cycles_periodicites(df_filtered):
     """Analyser les cycles et périodicités dans les données"""
     
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
     st.subheader("🔄 Analyse des Cycles et Périodicités")
     
     if len(df_filtered) < 100:
         st.warning(f"Cette analyse nécessite un grand nombre de données (>100). Actuellement : {len(df_filtered)} séismes.")
-        st.markdown('</div>', unsafe_allow_html=True)
         return
     
     # Créer une série temporelle journalière
@@ -1230,8 +913,6 @@ def analyser_cycles_periodicites(df_filtered):
             <p><strong>Conclusion :</strong> {'Cycle hebdomadaire significatif détecté' if p < 0.05 else 'Pas de cycle hebdomadaire significatif'}</p>
         </div>
         """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Fonction principale qui peut être appelée depuis app.py
 def main():
@@ -1239,4 +920,158 @@ def main():
     show_analyse_tendances()
 
 if __name__ == "__main__":
-    main()
+    main().tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # Test statistique Chi²
+    if len(mois_counts) >= 6:  # Au moins 6 mois pour un test valide
+        observed_values = [mois_dict[i] for i in range(1, 13)]
+        chi2, p = stats.chisquare(observed_values)
+        
+        st.markdown(f"""
+        <div class="statistical-result">
+            <h4>🧮 Test Chi² d'uniformité</h4>
+            <p><strong>Chi² =</strong> {chi2:.2f}</p>
+            <p><strong>p-value =</strong> {p:.4f}</p>
+            <p><strong>Interprétation :</strong> {'Il existe une variation saisonnière statistiquement significative' if p < 0.05 else 'La distribution mensuelle semble uniforme (pas de tendance saisonnière significative)'}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # 2. Heatmap par mois et année
+    if len(df_filtered['Annee'].unique()) > 1:
+        st.markdown("#### 🔥 Heatmap mensuelle par année")
+        
+        try:
+            heatmap_data = df_filtered.groupby(['Annee', 'Mois']).size().unstack(fill_value=0)
+            
+            # S'assurer que toutes les colonnes existent
+            for m in range(1, 13):
+                if m not in heatmap_data.columns:
+                    heatmap_data[m] = 0
+            
+            heatmap_data = heatmap_data.reindex(sorted(heatmap_data.columns), axis=1)
+            
+            # Colormap personnalisée
+            colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", 
+                     "#4292c6", "#2171b5", "#08519c", "#08306b"]
+            cmap = LinearSegmentedColormap.from_list("custom_blues", colors)
+            
+            fig, ax = plt.subplots(figsize=(14, 8))
+            sns.heatmap(heatmap_data, cmap=cmap, annot=True, fmt="d", linewidths=.5, ax=ax)
+            ax.set_title('Nombre de séismes par mois et par année')
+            ax.set_xlabel('Mois')
+            ax.set_ylabel('Année')
+            ax.set_xticklabels([mois_noms[i-1] for i in heatmap_data.columns], rotation=45)
+            
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+            
+        except Exception as e:
+            st.warning(f"Impossible de créer la heatmap: {e}")
+    
+    # 3. Magnitude moyenne par mois
+    st.markdown("#### ⚡ Magnitude moyenne par mois")
+    
+    mag_means = df_filtered.groupby('Mois')['Magnitude'].mean()
+    
+    fig, ax = plt.subplots(figsize=(14, 6))
+    mois_avec_donnees = sorted(mag_means.index)
+    bars = ax.bar(mois_avec_donnees, mag_means.values, color='orange', alpha=0.8)
+    
+    # Ajouter les valeurs sur les barres
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{height:.2f}', ha='center', va='bottom', fontsize=10)
+    
+    ax.set_title('Magnitude moyenne des séismes par mois')
+    ax.set_xlabel('Mois')
+    ax.set_ylabel('Magnitude moyenne')
+    ax.set_xticks(mois_avec_donnees)
+    ax.set_xticklabels([mois_noms[int(i)-1] for i in mois_avec_donnees], rotation=45)
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # 4. Analyse par saison
+    st.markdown("#### 🍂 Analyse saisonnière")
+    
+    season_counts = df_filtered.groupby('Saison').size()
+    season_order = ['Hiver', 'Printemps', 'Été', 'Automne']
+    season_counts = season_counts.reindex([s for s in season_order if s in season_counts.index])
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.bar(season_counts.index, season_counts.values, 
+                  color=['lightblue', 'lightgreen', 'orange', 'brown'], alpha=0.8)
+    
+    # Ajouter les valeurs et pourcentages
+    for bar in bars:
+        height = bar.get_height()
+        percentage = height / len(df_filtered) * 100
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{int(height)}\n({percentage:.1f}%)', 
+               ha='center', va='bottom', fontsize=11, fontweight='bold')
+    
+    ax.set_title('Nombre de séismes par saison')
+    ax.set_xlabel('Saison')
+    ax.set_ylabel('Nombre de séismes')
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # Statistiques par saison
+    if len(season_counts) > 0:
+        st.markdown("#### 📋 Statistiques saisonnières")
+        
+        stats_data = []
+        for saison, count in season_counts.items():
+            percentage = count / len(df_filtered) * 100
+            stats_data.append({
+                "Saison": saison,
+                "Nombre de séismes": count,
+                "Pourcentage": f"{percentage:.1f}%"
+            })
+        
+        stats_df = pd.DataFrame(stats_data)
+        st.dataframe(stats_df, use_container_width=True, hide_index=True)
+
+def analyser_tendances_journalieres(df_filtered):
+    """Analyser les tendances journalières et cycles hebdomadaires"""
+    
+    st.subheader("🕐 Analyse des Tendances Journalières")
+    
+    if len(df_filtered) == 0:
+        st.warning("Aucune donnée pour l'analyse journalière.")
+        return
+    
+    # 1. Distribution par heure
+    st.markdown("#### ⏰ Distribution par heure")
+    
+    heure_counts = df_filtered.groupby('Heure').size()
+    
+    fig, ax = plt.subplots(figsize=(14, 6))
+    bars = ax.bar(heure_counts.index, heure_counts.values, color='darkblue', alpha=0.8)
+    
+    # Ajouter les valeurs sur les barres
+    for bar in bars:
+        height = bar.get_height()
+        if height > 0:
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                   f'{int(height)}', ha='center', va='bottom', fontsize=9)
+    
+    ax.set_title('Nombre de séismes par heure de la journée')
+    ax.set_xlabel('Heure')
+    ax.set_ylabel('Nombre de séismes')
+    ax.set_xticks(range(0, 24, 2))
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt
