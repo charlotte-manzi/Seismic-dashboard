@@ -416,6 +416,7 @@ def analyser_tendances_saisonnieres(df_filtered):
     mois_noms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
                  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
     
+    # 1. Distribution mensuelle
     st.markdown("#### 📊 Distribution mensuelle")
     
     mois_counts = df_filtered.groupby('Mois').size()
@@ -446,6 +447,7 @@ def analyser_tendances_saisonnieres(df_filtered):
     st.pyplot(fig)
     plt.close()
     
+    # Test statistique Chi²
     if len(mois_counts) >= 6:
         observed_values = [mois_dict[i] for i in range(1, 13)]
         chi2, p = stats.chisquare(observed_values)
@@ -458,6 +460,112 @@ def analyser_tendances_saisonnieres(df_filtered):
             <p><strong>Interprétation :</strong> {'Il existe une variation saisonnière statistiquement significative' if p < 0.05 else 'La distribution mensuelle semble uniforme (pas de tendance saisonnière significative)'}</p>
         </div>
         """, unsafe_allow_html=True)
+    
+    # 2. Heatmap par mois et année
+    if len(df_filtered['Annee'].unique()) > 1:
+        st.markdown("#### 🔥 Heatmap mensuelle par année")
+        
+        try:
+            heatmap_data = df_filtered.groupby(['Annee', 'Mois']).size().unstack(fill_value=0)
+            
+            for m in range(1, 13):
+                if m not in heatmap_data.columns:
+                    heatmap_data[m] = 0
+            
+            heatmap_data = heatmap_data.reindex(sorted(heatmap_data.columns), axis=1)
+            
+            colors = ["#f7fbff", "#deebf7", "#c6dbef", "#9ecae1", "#6baed6", 
+                     "#4292c6", "#2171b5", "#08519c", "#08306b"]
+            cmap = LinearSegmentedColormap.from_list("custom_blues", colors)
+            
+            fig, ax = plt.subplots(figsize=(14, 8))
+            sns.heatmap(heatmap_data, cmap=cmap, annot=True, fmt="d", linewidths=.5, ax=ax)
+            ax.set_title('Nombre de séismes par mois et par année')
+            ax.set_xlabel('Mois')
+            ax.set_ylabel('Année')
+            ax.set_xticklabels([mois_noms[i-1] for i in heatmap_data.columns], rotation=45)
+            
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+            
+        except Exception as e:
+            st.warning(f"Impossible de créer la heatmap: {e}")
+    
+    # 3. Magnitude moyenne par mois
+    st.markdown("#### ⚡ Magnitude moyenne par mois")
+    
+    mag_means = df_filtered.groupby('Mois')['Magnitude'].mean()
+    
+    fig, ax = plt.subplots(figsize=(14, 6))
+    mois_avec_donnees = sorted(mag_means.index)
+    bars = ax.bar(mois_avec_donnees, mag_means.values, color='orange', alpha=0.8)
+    
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{height:.2f}', ha='center', va='bottom', fontsize=10)
+    
+    ax.set_title('Magnitude moyenne des séismes par mois')
+    ax.set_xlabel('Mois')
+    ax.set_ylabel('Magnitude moyenne')
+    ax.set_xticks(mois_avec_donnees)
+    ax.set_xticklabels([mois_noms[int(i)-1] for i in mois_avec_donnees], rotation=45)
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # 4. Analyse par saison
+    st.markdown("#### 🍂 Analyse saisonnière")
+    
+    season_counts = df_filtered.groupby('Saison').size()
+    season_order = ['Hiver', 'Printemps', 'Été', 'Automne']
+    season_counts = season_counts.reindex([s for s in season_order if s in season_counts.index])
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.bar(season_counts.index, season_counts.values, 
+                  color=['lightblue', 'lightgreen', 'orange', 'brown'], alpha=0.8)
+    
+    for bar in bars:
+        height = bar.get_height()
+        percentage = height / len(df_filtered) * 100
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{int(height)}\n({percentage:.1f}%)', 
+               ha='center', va='bottom', fontsize=11, fontweight='bold')
+    
+    ax.set_title('Nombre de séismes par saison')
+    ax.set_xlabel('Saison')
+    ax.set_ylabel('Nombre de séismes')
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # Statistiques par saison (fixed for Arrow compatibility)
+    if len(season_counts) > 0:
+        st.markdown("#### 📋 Statistiques saisonnières")
+        
+        stats_data = []
+        for saison, count in season_counts.items():
+            percentage = count / len(df_filtered) * 100
+            stats_data.append({
+                "Saison": str(saison),
+                "Nombre de séismes": int(count),
+                "Pourcentage": f"{percentage:.1f}%"
+            })
+        
+        stats_df = pd.DataFrame(stats_data)
+        # Convert to proper types for Arrow compatibility
+        stats_df['Saison'] = stats_df['Saison'].astype(str)
+        stats_df['Nombre de séismes'] = stats_df['Nombre de séismes'].astype(int)
+        stats_df['Pourcentage'] = stats_df['Pourcentage'].astype(str)
+        
+        st.dataframe(stats_df, use_container_width=True, hide_index=True)
 
 def analyser_tendances_journalieres(df_filtered):
     """Analyser les tendances journalières et cycles hebdomadaires"""
@@ -468,6 +576,7 @@ def analyser_tendances_journalieres(df_filtered):
         st.warning("Aucune donnée pour l'analyse journalière.")
         return
     
+    # 1. Distribution par heure
     st.markdown("#### ⏰ Distribution par heure")
     
     heure_counts = df_filtered.groupby('Heure').size()
@@ -491,6 +600,120 @@ def analyser_tendances_journalieres(df_filtered):
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
+    
+    # 2. Analyse par périodes de la journée
+    st.markdown("#### 🌅 Analyse par périodes")
+    
+    periodes = {
+        'Nuit (0h-6h)': list(range(0, 6)),
+        'Matin (6h-12h)': list(range(6, 12)),
+        'Après-midi (12h-18h)': list(range(12, 18)),
+        'Soir (18h-24h)': list(range(18, 24))
+    }
+    
+    periode_counts = {}
+    for nom, heures in periodes.items():
+        periode_counts[nom] = df_filtered[df_filtered['Heure'].isin(heures)].shape[0]
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    colors = ['darkblue', 'gold', 'orange', 'purple']
+    bars = ax.bar(periode_counts.keys(), periode_counts.values(), color=colors, alpha=0.8)
+    
+    for bar in bars:
+        height = bar.get_height()
+        percentage = height / len(df_filtered) * 100
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{int(height)}\n({percentage:.1f}%)', 
+               ha='center', va='bottom', fontsize=11, fontweight='bold')
+    
+    ax.set_title('Nombre de séismes par période de la journée')
+    ax.set_xlabel('Période')
+    ax.set_ylabel('Nombre de séismes')
+    ax.tick_params(axis='x', rotation=45)
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # 3. Distribution par jour de la semaine
+    st.markdown("#### 📅 Distribution hebdomadaire")
+    
+    jours_semaine = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    jour_counts = df_filtered.groupby('JourSemaine').size()
+    
+    jours_dict = {i: 0 for i in range(7)}
+    for jour, count in jour_counts.items():
+        jours_dict[jour] = count
+    
+    fig, ax = plt.subplots(figsize=(14, 6))
+    colors = ['lightblue' if i < 5 else 'lightcoral' for i in range(7)]
+    bars = ax.bar(range(7), [jours_dict.get(i, 0) for i in range(7)], color=colors, alpha=0.8)
+    
+    for i, bar in enumerate(bars):
+        height = bar.get_height()
+        if height > 0:
+            ax.text(bar.get_x() + bar.get_width()/2., height,
+                   f'{int(height)}', ha='center', va='bottom', fontsize=10)
+    
+    ax.set_title('Nombre de séismes par jour de la semaine')
+    ax.set_xlabel('Jour de la semaine')
+    ax.set_ylabel('Nombre de séismes')
+    ax.set_xticks(range(7))
+    ax.set_xticklabels(jours_semaine)
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # 4. Comparaison semaine vs weekend
+    st.markdown("#### 🏢 Semaine vs Weekend")
+    
+    semaine = df_filtered[df_filtered['JourSemaine'] < 5].shape[0]
+    weekend = df_filtered[df_filtered['JourSemaine'] >= 5].shape[0]
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    categories = ['Jours de semaine\n(Lun-Ven)', 'Weekend\n(Sam-Dim)']
+    values = [semaine, weekend]
+    colors = ['lightblue', 'lightcoral']
+    
+    bars = ax.bar(categories, values, color=colors, alpha=0.8)
+    
+    total = semaine + weekend
+    for i, bar in enumerate(bars):
+        height = bar.get_height()
+        percentage = height / total * 100 if total > 0 else 0
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+               f'{int(height)}\n({percentage:.1f}%)', 
+               ha='center', va='bottom', fontsize=12, fontweight='bold')
+    
+    ax.set_title('Nombre de séismes : Jours de semaine vs Weekend')
+    ax.set_ylabel('Nombre de séismes')
+    ax.grid(alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # Statistiques semaine/weekend
+    if total > 0:
+        ratio_observe = weekend / semaine if semaine > 0 else 0
+        ratio_attendu = 2/5  # 2 jours weekend / 5 jours semaine
+        
+        st.markdown(f"""
+        <div class="trend-metric">
+            <h4>📊 Analyse Semaine/Weekend</h4>
+            <p><strong>Jours de semaine :</strong> {semaine} séismes ({semaine/total*100:.1f}%)</p>
+            <p><strong>Weekend :</strong> {weekend} séismes ({weekend/total*100:.1f}%)</p>
+            <p><strong>Rapport observé :</strong> {ratio_observe:.2f} (weekend/semaine)</p>
+            <p><strong>Rapport attendu si uniforme :</strong> {ratio_attendu:.2f}</p>
+            <p><strong>Interprétation :</strong> {'Le weekend a proportionnellement plus de séismes' if ratio_observe > ratio_attendu else 'Distribution relativement uniforme'}</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def analyser_tendances_long_terme(df_filtered):
     """Analyser les tendances à long terme avec régression"""
@@ -502,6 +725,7 @@ def analyser_tendances_long_terme(df_filtered):
         st.warning(f"Cette analyse nécessite au moins 2 années. Années disponibles : {', '.join(map(str, sorted(annees_uniques)))}")
         return
     
+    # Regrouper par mois pour l'analyse des séries temporelles
     df_mensuel = df_filtered.groupby(pd.Grouper(key='Date', freq='M')).agg({
         'Magnitude': ['count', 'mean', 'max'],
         'Profondeur': 'mean'
@@ -510,6 +734,7 @@ def analyser_tendances_long_terme(df_filtered):
     df_mensuel.columns = ['_'.join(col).strip() if isinstance(col, tuple) else col for col in df_mensuel.columns.values]
     df_mensuel.rename(columns={'Magnitude_count': 'Nombre_Seismes'}, inplace=True)
     
+    # 1. Évolution du nombre de séismes
     st.markdown("#### 📈 Évolution mensuelle du nombre de séismes")
     
     fig, ax = plt.subplots(figsize=(15, 8))
@@ -518,6 +743,7 @@ def analyser_tendances_long_terme(df_filtered):
            marker='o', linestyle='-', color='blue', linewidth=2, markersize=6,
            label='Données observées')
     
+    # Tendance sur données brutes
     if len(df_mensuel) > 1:
         X = np.arange(len(df_mensuel)).reshape(-1, 1)
         y = df_mensuel['Nombre_Seismes'].values
@@ -532,12 +758,46 @@ def analyser_tendances_long_terme(df_filtered):
         
         st.markdown(f"""
         <div class="statistical-result">
-            <h4>🧮 Analyse de tendance</h4>
+            <h4>🧮 Analyse de tendance (données brutes)</h4>
             <p><strong>Pente :</strong> {model.slope:.4f} séismes/mois</p>
             <p><strong>p-value :</strong> {model.pvalue:.4f}</p>
+            <p><strong>R² :</strong> {model.rvalue**2:.4f}</p>
             <p><strong>Tendance :</strong> {trend_direction} {trend_significance}</p>
         </div>
         """, unsafe_allow_html=True)
+    
+    # Moyenne mobile si suffisamment de données
+    if len(df_mensuel) >= 6:
+        window_size = min(6, len(df_mensuel) // 2)
+        rolling_mean = df_mensuel['Nombre_Seismes'].rolling(window=window_size, center=True).mean()
+        ax.plot(df_mensuel.index, rolling_mean, color='green', linestyle='-.', linewidth=2,
+               label=f'Moyenne mobile ({window_size} mois)')
+        
+        # Tendance sur moyenne mobile
+        if len(rolling_mean.dropna()) > 1:
+            rolling_clean = rolling_mean.dropna()
+            X_roll = np.arange(len(rolling_clean)).reshape(-1, 1)
+            y_roll = rolling_clean.values
+            
+            model_roll = stats.linregress(X_roll.flatten(), y_roll)
+            trend_line_roll = model_roll.slope * X_roll.flatten() + model_roll.intercept
+            
+            trend_indices = df_mensuel.index[~rolling_mean.isna()]
+            ax.plot(trend_indices, trend_line_roll, color='purple', linestyle='--', linewidth=2,
+                   label=f'Tendance lissée (pente={model_roll.slope:.4f})')
+            
+            trend_significance_roll = "significative" if model_roll.pvalue < 0.05 else "non significative"
+            trend_direction_roll = "augmentation" if model_roll.slope > 0 else "diminution"
+            
+            st.markdown(f"""
+            <div class="trend-metric">
+                <h4>📊 Analyse de tendance (moyenne mobile)</h4>
+                <p><strong>Pente :</strong> {model_roll.slope:.4f} séismes/mois</p>
+                <p><strong>p-value :</strong> {model_roll.pvalue:.4f}</p>
+                <p><strong>R² :</strong> {model_roll.rvalue**2:.4f}</p>
+                <p><strong>Tendance :</strong> {trend_direction_roll} {trend_significance_roll}</p>
+            </div>
+            """, unsafe_allow_html=True)
     
     ax.set_title('Évolution du nombre de séismes par mois', fontsize=16, pad=20)
     ax.set_xlabel('Date')
@@ -549,6 +809,79 @@ def analyser_tendances_long_terme(df_filtered):
     plt.tight_layout()
     st.pyplot(fig)
     plt.close()
+    
+    # 2. Évolution de la magnitude moyenne
+    st.markdown("#### ⚡ Évolution de la magnitude moyenne")
+    
+    fig, ax = plt.subplots(figsize=(15, 6))
+    ax.plot(df_mensuel.index, df_mensuel['Magnitude_mean'], 
+           marker='o', linestyle='-', color='orange', linewidth=2, markersize=6)
+    
+    # Tendance de la magnitude
+    if len(df_mensuel) > 1:
+        X = np.arange(len(df_mensuel)).reshape(-1, 1)
+        y = df_mensuel['Magnitude_mean'].values
+        model_mag = stats.linregress(X.flatten(), y)
+        trend_line_mag = model_mag.slope * X.flatten() + model_mag.intercept
+        ax.plot(df_mensuel.index, trend_line_mag, color='red', linestyle='--', linewidth=2,
+               label=f'Tendance (pente={model_mag.slope:.4f})')
+        
+        trend_significance = "significative" if model_mag.pvalue < 0.05 else "non significative"
+        trend_direction = "augmentation" if model_mag.slope > 0 else "diminution"
+        
+        st.markdown(f"""
+        <div class="trend-metric">
+            <h4>📊 Tendance de la magnitude moyenne</h4>
+            <p><strong>Pente :</strong> {model_mag.slope:.4f} magnitude/mois</p>
+            <p><strong>p-value :</strong> {model_mag.pvalue:.4f}</p>
+            <p><strong>Tendance :</strong> {trend_direction} {trend_significance}</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    ax.set_title('Évolution de la magnitude moyenne par mois')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Magnitude moyenne')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
+    
+    # 3. Tableau récapitulatif annuel
+    st.markdown("#### 📋 Résumé annuel de l'activité sismique")
+    
+    df_annuel = df_filtered.groupby('Annee').agg({
+        'Magnitude': ['count', 'mean', 'max', 'min', 'std'],
+        'Profondeur': ['mean', 'min', 'max', 'std']
+    })
+    
+    df_annuel.columns = ['_'.join(col).strip() if isinstance(col, tuple) else col for col in df_annuel.columns.values]
+    
+    # Renommer les colonnes pour plus de clarté
+    column_mapping = {
+        'Magnitude_count': 'Nombre',
+        'Magnitude_mean': 'Mag_Moyenne',
+        'Magnitude_max': 'Mag_Max',
+        'Magnitude_min': 'Mag_Min',
+        'Magnitude_std': 'Mag_Écart-type',
+        'Profondeur_mean': 'Prof_Moyenne',
+        'Profondeur_min': 'Prof_Min',
+        'Profondeur_max': 'Prof_Max',
+        'Profondeur_std': 'Prof_Écart-type'
+    }
+    
+    df_annuel = df_annuel.rename(columns=column_mapping)
+    
+    # Arrondir les valeurs et convertir les types pour Arrow compatibility
+    for col in df_annuel.columns:
+        if 'Nombre' in col:
+            df_annuel[col] = df_annuel[col].astype(int)
+        else:
+            df_annuel[col] = df_annuel[col].round(2).astype(float)
+    
+    st.dataframe(df_annuel, use_container_width=True)
 
 def calculate_autocorr(series, max_lags=50):
     """Calculer l'autocorrélation manuellement"""
@@ -576,10 +909,12 @@ def analyser_cycles_periodicites(df_filtered):
         st.warning(f"Cette analyse nécessite un grand nombre de données (>100). Actuellement : {len(df_filtered)} séismes.")
         return
     
+    # Créer une série temporelle journalière
     ts_daily = df_filtered.groupby(df_filtered['Date'].dt.date).size()
     date_range = pd.date_range(start=ts_daily.index.min(), end=ts_daily.index.max())
     ts_daily = ts_daily.reindex(date_range, fill_value=0)
     
+    # 1. Autocorrélation
     st.markdown("#### 📊 Analyse d'autocorrélation")
     
     max_lags = min(100, len(ts_daily) - 1)
@@ -609,6 +944,52 @@ def analyser_cycles_periodicites(df_filtered):
     - Un pic à 7 jours indiquerait un cycle hebdomadaire
     - Un pic à 30 jours suggérerait un cycle mensuel
     """)
+    
+    # 2. Cycle hebdomadaire
+    st.markdown("#### 📅 Analyse du cycle hebdomadaire")
+    
+    jour_semaine_counts = df_filtered.groupby('JourSemaine').size()
+    jours_dict = {i: 0 for i in range(7)}
+    for jour, count in jour_semaine_counts.items():
+        jours_dict[jour] = count
+    
+    jours_semaine = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    
+    fig, ax = plt.subplots(figsize=(12, 6))
+    colors = ['lightblue' if i < 5 else 'lightcoral' for i in range(7)]
+    bars = ax.bar(range(7), [jours_dict.get(i, 0) for i in range(7)], color=colors, alpha=0.8)
+    
+    # Test de significativité du cycle hebdomadaire
+    observed_values = [jours_dict.get(i, 0) for i in range(7)]
+    if sum(observed_values) > 0:
+        chi2, p = stats.chisquare(observed_values)
+        
+        for i, bar in enumerate(bars):
+            height = bar.get_height()
+            if height > 0:
+                ax.text(bar.get_x() + bar.get_width()/2., height,
+                       f'{int(height)}', ha='center', va='bottom', fontsize=10)
+        
+        ax.set_title(f'Cycle hebdomadaire (Chi²={chi2:.2f}, p={p:.4f})')
+        ax.set_xlabel('Jour de la semaine')
+        ax.set_ylabel('Nombre de séismes')
+        ax.set_xticks(range(7))
+        ax.set_xticklabels(jours_semaine)
+        ax.grid(True, alpha=0.3)
+        ax.set_facecolor('#f8f9fa')
+        
+        plt.tight_layout()
+        st.pyplot(fig)
+        plt.close()
+        
+        st.markdown(f"""
+        <div class="statistical-result">
+            <h4>🧮 Test de cycle hebdomadaire</h4>
+            <p><strong>Chi² =</strong> {chi2:.2f}</p>
+            <p><strong>p-value =</strong> {p:.4f}</p>
+            <p><strong>Conclusion :</strong> {'Cycle hebdomadaire significatif détecté' if p < 0.05 else 'Pas de cycle hebdomadaire significatif'}</p>
+        </div>
+        """, unsafe_allow_html=True)
 
 def main():
     """Fonction principale à appeler depuis l'application principale"""
