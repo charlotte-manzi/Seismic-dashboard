@@ -1,5 +1,5 @@
 """
-Analyse des Caractéristiques Sismiques
+Analyse des Caractéristiques Sismiques - VERSION CORRIGÉE
 
 Ce module fournit une analyse complète des caractéristiques sismiques incluant :
 - Distribution des magnitudes avec catégorisation
@@ -222,7 +222,7 @@ def show_analyse_caracteristiques():
         analyser_energie(df)
 
 def prepare_seismic_characteristics(df):
-    """Préparer les caractéristiques sismiques calculées"""
+    """Préparer les caractéristiques sismiques calculées - VERSION CORRIGÉE"""
     
     df = df.copy()
     
@@ -231,8 +231,24 @@ def prepare_seismic_characteristics(df):
         st.warning(f"⚠️ {(df['Profondeur'] < 0).sum()} valeurs de profondeur négatives détectées. Application de la valeur absolue.")
         df['Profondeur'] = df['Profondeur'].abs()
     
+    # CORRECTION : Traiter les profondeurs nulles ou très faibles
+    # Remplacer les profondeurs nulles ou négatives par 1 km (valeur minimale raisonnable)
+    df['Profondeur'] = df['Profondeur'].replace(0, 1.0)  # Remplacer 0 par 1 km
+    df['Profondeur'] = np.where(df['Profondeur'] < 0.1, 1.0, df['Profondeur'])  # Minimum 0.1 km
+    
+    # Vérifier et corriger les valeurs NaN dans Magnitude et Profondeur
+    if df['Magnitude'].isna().any():
+        st.warning(f"⚠️ {df['Magnitude'].isna().sum()} valeurs de magnitude manquantes détectées. Suppression des lignes.")
+        df = df.dropna(subset=['Magnitude'])
+    
+    if df['Profondeur'].isna().any():
+        st.warning(f"⚠️ {df['Profondeur'].isna().sum()} valeurs de profondeur manquantes détectées. Suppression des lignes.")
+        df = df.dropna(subset=['Profondeur'])
+    
     # Catégorisation des magnitudes
     def categorize_magnitude(mag):
+        if pd.isna(mag):
+            return 'Inconnu'
         if 0 <= mag < 2.5:
             return 'Micro'
         elif 2.5 <= mag < 4.0:
@@ -253,6 +269,8 @@ def prepare_seismic_characteristics(df):
     
     # Catégorisation des profondeurs
     def categorize_depth(depth):
+        if pd.isna(depth):
+            return 'Inconnu'
         if 0 <= depth < 70:
             return 'Peu profond'
         elif 70 <= depth < 300:
@@ -264,15 +282,38 @@ def prepare_seismic_characteristics(df):
     df['Profondeur_Categorie'] = df['Profondeur'].apply(categorize_depth)
     
     # Calcul de l'énergie libérée (formule: E = 10^(1.5*M+4.8))
-    df['Energie'] = 10**(1.5 * df['Magnitude'] + 4.8)
+    # CORRECTION : Vérifier les valeurs avant le calcul
+    df['Energie'] = np.where(
+        df['Magnitude'].notna() & (df['Magnitude'] >= 0),
+        10**(1.5 * df['Magnitude'] + 4.8),
+        np.nan
+    )
     
-    # Calcul du potentiel destructeur 
+    # Calcul du potentiel destructeur - VERSION CORRIGÉE
     # Formule: Magnitude * (1 + 70/profondeur)
-    # Plus la profondeur est faible, plus le potentiel est élevé
-    df['Potentiel_Destructeur'] = df['Magnitude'] * (1 + 70/df['Profondeur'])
+    # CORRECTION : S'assurer qu'il n'y a pas de division par zéro et limiter les valeurs extrêmes
+    df['Potentiel_Destructeur'] = np.where(
+        (df['Magnitude'].notna()) & (df['Profondeur'].notna()) & (df['Profondeur'] > 0),
+        df['Magnitude'] * (1 + np.minimum(70/df['Profondeur'], 1000)),  # Limiter à 1000 max
+        np.nan
+    )
+    
+    # Supprimer les valeurs infinies ou NaN du potentiel destructeur
+    if df['Potentiel_Destructeur'].isna().any():
+        nb_nan = df['Potentiel_Destructeur'].isna().sum()
+        st.warning(f"⚠️ {nb_nan} valeurs de potentiel destructeur invalides supprimées.")
+        df = df.dropna(subset=['Potentiel_Destructeur'])
+    
+    # Vérifier les valeurs infinies
+    if np.isinf(df['Potentiel_Destructeur']).any():
+        nb_inf = np.isinf(df['Potentiel_Destructeur']).sum()
+        st.warning(f"⚠️ {nb_inf} valeurs infinies de potentiel destructeur détectées et supprimées.")
+        df = df[~np.isinf(df['Potentiel_Destructeur'])]
     
     # Catégorisation du potentiel destructeur
     def categorize_potentiel(pot):
+        if pd.isna(pot) or np.isinf(pot):
+            return 'Inconnu'
         if 0 <= pot < 3:
             return 'Très faible'
         elif 3 <= pot < 6:
@@ -652,7 +693,7 @@ def analyser_relation_magnitude_profondeur(df_filtered):
     plt.close()
 
 def analyser_potentiel_destructeur(df_filtered):
-    """Analyser le potentiel destructeur"""
+    """Analyser le potentiel destructeur - VERSION CORRIGÉE"""
     
     st.subheader("⚠️ Analyse du Potentiel Destructeur")
     
@@ -660,46 +701,94 @@ def analyser_potentiel_destructeur(df_filtered):
         st.warning("Aucune donnée pour l'analyse du potentiel destructeur.")
         return
     
+    # CORRECTION : Vérifications supplémentaires avant l'analyse
+    if 'Potentiel_Destructeur' not in df_filtered.columns:
+        st.error("❌ Colonne 'Potentiel_Destructeur' manquante.")
+        return
+    
+    # Nettoyer les données avant l'analyse
+    df_clean = df_filtered.copy()
+    
+    # Supprimer les valeurs NaN ou infinies
+    initial_count = len(df_clean)
+    df_clean = df_clean[df_clean['Potentiel_Destructeur'].notna()]
+    df_clean = df_clean[~np.isinf(df_clean['Potentiel_Destructeur'])]
+    df_clean = df_clean[df_clean['Potentiel_Destructeur'] >= 0]  # Valeurs positives seulement
+    
+    cleaned_count = len(df_clean)
+    if cleaned_count < initial_count:
+        st.info(f"ℹ️ {initial_count - cleaned_count} valeurs invalides supprimées de l'analyse.")
+    
+    if len(df_clean) == 0:
+        st.error("❌ Aucune donnée valide pour l'analyse du potentiel destructeur.")
+        return
+    
     # 1. Distribution du potentiel destructeur
     st.markdown("#### 📊 Distribution du potentiel destructeur")
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     
-    # Histogramme
-    ax1.hist(df_filtered['Potentiel_Destructeur'], bins=30, alpha=0.7, 
-             color='orange', edgecolor='black', density=True)
+    # Histogramme - avec vérification des données
+    try:
+        potentiel_data = df_clean['Potentiel_Destructeur'].values
+        
+        # Vérifier qu'il y a des données et qu'elles sont valides
+        if len(potentiel_data) > 0 and not np.all(np.isnan(potentiel_data)):
+            ax1.hist(potentiel_data, bins=min(30, len(potentiel_data)//2), alpha=0.7, 
+                     color='orange', edgecolor='black', density=True)
+            
+            mean_val = np.nanmean(potentiel_data)
+            median_val = np.nanmedian(potentiel_data)
+            
+            ax1.axvline(mean_val, color='red', linestyle='--', 
+                       label=f'Moyenne: {mean_val:.2f}')
+            ax1.axvline(median_val, color='green', linestyle='--', 
+                       label=f'Médiane: {median_val:.2f}')
+            
+            ax1.set_title('Distribution du potentiel destructeur')
+            ax1.set_xlabel('Potentiel destructeur')
+            ax1.set_ylabel('Densité')
+            ax1.legend()
+            ax1.grid(alpha=0.3)
+        else:
+            ax1.text(0.5, 0.5, 'Données insuffisantes', transform=ax1.transAxes, 
+                    ha='center', va='center', fontsize=14)
+            ax1.set_title('Distribution du potentiel destructeur - Données insuffisantes')
     
-    ax1.axvline(df_filtered['Potentiel_Destructeur'].mean(), color='red', linestyle='--', 
-               label=f'Moyenne: {df_filtered["Potentiel_Destructeur"].mean():.2f}')
-    ax1.axvline(df_filtered['Potentiel_Destructeur'].median(), color='green', linestyle='--', 
-               label=f'Médiane: {df_filtered["Potentiel_Destructeur"].median():.2f}')
-    
-    ax1.set_title('Distribution du potentiel destructeur')
-    ax1.set_xlabel('Potentiel destructeur')
-    ax1.set_ylabel('Densité')
-    ax1.legend()
-    ax1.grid(alpha=0.3)
+    except Exception as e:
+        st.error(f"Erreur lors de la création de l'histogramme: {str(e)}")
+        ax1.text(0.5, 0.5, 'Erreur de visualisation', transform=ax1.transAxes, 
+                ha='center', va='center', fontsize=14)
     
     # Distribution par catégorie
-    order = ['Très faible', 'Faible', 'Modéré', 'Élevé', 'Très élevé']
-    order = [cat for cat in order if cat in df_filtered['Potentiel_Categorie'].unique()]
+    try:
+        order = ['Très faible', 'Faible', 'Modéré', 'Élevé', 'Très élevé']
+        order = [cat for cat in order if cat in df_clean['Potentiel_Categorie'].unique()]
+        
+        if len(order) > 0:
+            potentiel_counts = df_clean['Potentiel_Categorie'].value_counts().reindex(order)
+            colors = plt.cm.Reds(np.linspace(0.3, 0.9, len(order)))
+            
+            bars = ax2.bar(order, potentiel_counts.values, color=colors, alpha=0.8, edgecolor='black')
+            
+            total = len(df_clean)
+            for i, (bar, count) in enumerate(zip(bars, potentiel_counts.values)):
+                if not pd.isna(count) and count > 0:
+                    percentage = count / total * 100
+                    ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height(),
+                           f'{int(count)}\n({percentage:.1f}%)', ha='center', va='bottom', fontweight='bold')
+            
+            ax2.set_title('Nombre de séismes par catégorie de potentiel')
+            ax2.set_xlabel('Catégorie de potentiel destructeur')
+            ax2.set_ylabel('Nombre de séismes')
+            ax2.tick_params(axis='x', rotation=45)
+            ax2.grid(alpha=0.3)
+        else:
+            ax2.text(0.5, 0.5, 'Aucune catégorie disponible', transform=ax2.transAxes, 
+                    ha='center', va='center', fontsize=14)
     
-    potentiel_counts = df_filtered['Potentiel_Categorie'].value_counts().reindex(order)
-    colors = plt.cm.Reds(np.linspace(0.3, 0.9, len(order)))
-    
-    bars = ax2.bar(order, potentiel_counts.values, color=colors, alpha=0.8, edgecolor='black')
-    
-    total = len(df_filtered)
-    for i, (bar, count) in enumerate(zip(bars, potentiel_counts.values)):
-        percentage = count / total * 100
-        ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height(),
-               f'{count}\n({percentage:.1f}%)', ha='center', va='bottom', fontweight='bold')
-    
-    ax2.set_title('Nombre de séismes par catégorie de potentiel')
-    ax2.set_xlabel('Catégorie de potentiel destructeur')
-    ax2.set_ylabel('Nombre de séismes')
-    ax2.tick_params(axis='x', rotation=45)
-    ax2.grid(alpha=0.3)
+    except Exception as e:
+        st.error(f"Erreur lors de la création du graphique par catégorie: {str(e)}")
     
     plt.tight_layout()
     st.pyplot(fig)
@@ -708,29 +797,94 @@ def analyser_potentiel_destructeur(df_filtered):
     # 2. Analyse des séismes les plus dangereux
     st.markdown("#### 🚨 Séismes à fort potentiel destructeur")
     
-    # Identifier les séismes les plus dangereux (top 10%)
-    seuil_danger = df_filtered['Potentiel_Destructeur'].quantile(0.9)
-    seismes_dangereux = df_filtered[df_filtered['Potentiel_Destructeur'] >= seuil_danger]
+    try:
+        # Identifier les séismes les plus dangereux (top 10%)
+        if len(df_clean) > 10:  # S'assurer qu'il y a assez de données
+            seuil_danger = df_clean['Potentiel_Destructeur'].quantile(0.9)
+            seismes_dangereux = df_clean[df_clean['Potentiel_Destructeur'] >= seuil_danger]
+            
+            if len(seismes_dangereux) > 0:
+                st.markdown(f"""
+                <div class="danger-alert">
+                    <h4>⚠️ Séismes à surveiller</h4>
+                    <p><strong>{len(seismes_dangereux)} séismes</strong> ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})</p>
+                    <p>Ces séismes représentent <strong>{len(seismes_dangereux)/len(df_clean)*100:.1f}%</strong> de l'ensemble</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Tableau des séismes les plus dangereux
+                if 'Date' in seismes_dangereux.columns:
+                    top_dangerous = seismes_dangereux.nlargest(10, 'Potentiel_Destructeur')[
+                        ['Date', 'Magnitude', 'Profondeur', 'Potentiel_Destructeur']
+                    ].copy()
+                    
+                    top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date']).dt.strftime('%d/%m/%Y %H:%M')
+                    top_dangerous.columns = ['Date', 'Magnitude', 'Profondeur (km)', 'Potentiel']
+                    
+                    st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
+                else:
+                    # Si pas de colonne Date, afficher sans
+                    top_dangerous = seismes_dangereux.nlargest(10, 'Potentiel_Destructeur')[
+                        ['Magnitude', 'Profondeur', 'Potentiel_Destructeur']
+                    ].copy()
+                    top_dangerous.columns = ['Magnitude', 'Profondeur (km)', 'Potentiel']
+                    st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
+            else:
+                st.info("ℹ️ Aucun séisme avec un potentiel destructeur particulièrement élevé détecté.")
+        else:
+            st.info("ℹ️ Données insuffisantes pour l'analyse des séismes dangereux.")
     
-    if len(seismes_dangereux) > 0:
-        st.markdown(f"""
-        <div class="danger-alert">
-            <h4>⚠️ Séismes à surveiller</h4>
-            <p><strong>{len(seismes_dangereux)} séismes</strong> ont un potentiel destructeur élevé (≥ {seuil_danger:.1f})</p>
-            <p>Ces séismes représentent <strong>{len(seismes_dangereux)/len(df_filtered)*100:.1f}%</strong> de l'ensemble</p>
-        </div>
-        """, unsafe_allow_html=True)
+    except Exception as e:
+        st.error(f"Erreur lors de l'analyse des séismes dangereux: {str(e)}")
         
-        # Tableau des séismes les plus dangereux
-        if 'Date' in seismes_dangereux.columns:
-            top_dangerous = seismes_dangereux.nlargest(10, 'Potentiel_Destructeur')[
-                ['Date', 'Magnitude', 'Profondeur', 'Potentiel_Destructeur']
-            ].copy()
+    # 3. Statistiques du potentiel destructeur
+    st.markdown("#### 📊 Statistiques du potentiel destructeur")
+    
+    try:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("""
+            <div class="stats-container">
+                <h4>📊 Statistiques descriptives</h4>
+            </div>
+            """, unsafe_allow_html=True)
             
-            top_dangerous['Date'] = pd.to_datetime(top_dangerous['Date']).dt.strftime('%d/%m/%Y %H:%M')
-            top_dangerous.columns = ['Date', 'Magnitude', 'Profondeur (km)', 'Potentiel']
-            
-            st.dataframe(top_dangerous, hide_index=True, use_container_width=True)
+            stats_data = {
+                "Statistique": ["Nombre total", "Minimum", "Maximum", "Moyenne", "Médiane", "Écart-type"],
+                "Valeur": [
+                    len(df_clean),
+                    f"{df_clean['Potentiel_Destructeur'].min():.2f}",
+                    f"{df_clean['Potentiel_Destructeur'].max():.2f}",
+                    f"{df_clean['Potentiel_Destructeur'].mean():.2f}",
+                    f"{df_clean['Potentiel_Destructeur'].median():.2f}",
+                    f"{df_clean['Potentiel_Destructeur'].std():.2f}"
+                ]
+            }
+            st.dataframe(pd.DataFrame(stats_data), hide_index=True)
+        
+        with col2:
+            if len(order) > 0:
+                st.markdown("""
+                <div class="stats-container">
+                    <h4>🏷️ Répartition par catégorie</h4>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                category_data = []
+                for category in order:
+                    count = potentiel_counts[category] if category in potentiel_counts.index else 0
+                    percentage = count / len(df_clean) * 100 if len(df_clean) > 0 else 0
+                    category_data.append({
+                        "Catégorie": category,
+                        "Nombre": int(count) if not pd.isna(count) else 0,
+                        "Pourcentage": f"{percentage:.1f}%"
+                    })
+                
+                st.dataframe(pd.DataFrame(category_data), hide_index=True)
+    
+    except Exception as e:
+        st.error(f"Erreur lors du calcul des statistiques: {str(e)}")
 
 def analyser_energie(df_filtered):
     """Analyser l'énergie libérée par les séismes"""
