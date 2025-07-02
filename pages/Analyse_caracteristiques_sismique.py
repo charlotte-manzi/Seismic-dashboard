@@ -1,5 +1,5 @@
 """
-Analyse des Caractéristiques Sismiques - VERSION CORRIGÉE
+Analyse des Caractéristiques Sismiques - 
 
 Ce module fournit une analyse complète des caractéristiques sismiques incluant :
 - Distribution des magnitudes avec catégorisation
